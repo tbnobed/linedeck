@@ -7,7 +7,14 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle, MonitorPlay, X } from "lucide-react";
 
 export function GridPage() {
-  const [columns, setColumns] = useState(3);
+  const [columns, setColumns] = useState<number>(() => {
+    const saved = localStorage.getItem("linedeck.columns");
+    const n = saved ? parseInt(saved, 10) : NaN;
+    return Number.isFinite(n) && n >= 1 && n <= 6 ? n : 3;
+  });
+  useEffect(() => {
+    localStorage.setItem("linedeck.columns", String(columns));
+  }, [columns]);
   const search = useSearch();
   const [, navigate] = useLocation();
   const params = new URLSearchParams(search);
