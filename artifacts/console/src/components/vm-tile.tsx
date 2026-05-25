@@ -171,7 +171,7 @@ export function VmTile({
     return <div className="h-full w-full">{TileChrome}</div>;
   }
   return (
-    <div className="h-[300px]">
+    <div className="aspect-video w-full">
       <div
         className={
           isFullscreen
