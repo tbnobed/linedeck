@@ -183,66 +183,130 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
     //   remote → local: subscribe to client.onclipboard and write the streamed
     //     text into navigator.clipboard.
     let lastPushed = "";
+    let pollTick = 0;
+    let lastDeniedLogged = 0;
+    const tag = `[Clipboard #${connectionId}]`;
+    // eslint-disable-next-line no-console
+    const log = (...a: unknown[]) => console.log(tag, ...a);
 
-    const pushTextToRemote = (text: string) => {
+    log("init", {
+      secureContext: window.isSecureContext,
+      hasClipboardApi: !!navigator.clipboard,
+      hasReadText: !!navigator.clipboard?.readText,
+      hasWriteText: !!navigator.clipboard?.writeText,
+      hasFocus: document.hasFocus(),
+      hasStringWriter: !!(Guacamole as unknown as { StringWriter?: unknown }).StringWriter,
+      hasStringReader: !!(Guacamole as unknown as { StringReader?: unknown }).StringReader,
+      hasCreateClipboardStream: typeof (client as unknown as { createClipboardStream?: unknown }).createClipboardStream === "function",
+    });
+
+    // One-shot permission probe.
+    try {
+      const perms = (navigator as unknown as { permissions?: { query: (q: { name: string }) => Promise<{ state: string }> } }).permissions;
+      perms?.query({ name: "clipboard-read" }).then(
+        (p) => log("permission clipboard-read =", p.state),
+        (e) => log("permission query failed", e),
+      );
+    } catch (e) {
+      log("permission probe threw", e);
+    }
+
+    const pushTextToRemote = (text: string, source: string) => {
       try {
+        log(`→ remote (${source}, ${text.length} chars)`, JSON.stringify(text.slice(0, 80)));
         const stream = client.createClipboardStream("text/plain");
         const writer = new Guacamole.StringWriter(stream);
         writer.sendText(text);
         writer.sendEnd();
         lastPushed = text;
-        // eslint-disable-next-line no-console
-        console.log(`[GuacClient #${connectionId}] clipboard → remote (${text.length} chars)`);
+        log("→ remote: stream end sent");
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.warn(`[GuacClient #${connectionId}] clipboard push failed`, err);
+        log("→ remote PUSH FAILED", err);
       }
     };
 
-    const syncFromLocalClipboard = async () => {
-      if (!document.hasFocus()) return;
+    const syncFromLocalClipboard = async (source: string) => {
+      pollTick++;
+      if (!document.hasFocus()) {
+        if (pollTick % 20 === 0) log(`poll skip (no focus) tick=${pollTick}`);
+        return;
+      }
       try {
         const text = await navigator.clipboard.readText();
-        if (text && text !== lastPushed) pushTextToRemote(text);
-      } catch {
-        // Permission denied / not focused / not a secure origin — silent.
+        if (pollTick % 20 === 0) log(`poll read ok (${source}) len=${text?.length ?? 0}`);
+        if (text && text !== lastPushed) {
+          log(`local clipboard changed via ${source}: "${text.slice(0, 80)}"`);
+          pushTextToRemote(text, source);
+        }
+      } catch (err) {
+        const now = Date.now();
+        if (now - lastDeniedLogged > 5000) {
+          log(`readText denied (${source})`, (err as Error)?.name, (err as Error)?.message);
+          lastDeniedLogged = now;
+        }
       }
     };
 
     // Inbound: remote copy → local clipboard.
     client.onclipboard = (stream, mimetype) => {
-      if (!mimetype.startsWith("text/")) return;
+      log(`← remote: clipboard stream opened, mimetype=${mimetype}`);
+      if (!mimetype.startsWith("text/")) {
+        log("← remote: ignoring non-text mimetype");
+        return;
+      }
       const reader = new Guacamole.StringReader(stream);
       let buf = "";
       reader.ontext = (text: string) => {
         buf += text;
+        log(`← remote: chunk len=${text.length} total=${buf.length}`);
       };
       reader.onend = () => {
-        lastPushed = buf; // avoid an immediate echo back to remote
-        navigator.clipboard.writeText(buf).catch(() => {
-          // Write may be blocked without a user gesture / focus.
-        });
-        // eslint-disable-next-line no-console
-        console.log(`[GuacClient #${connectionId}] clipboard ← remote (${buf.length} chars)`);
+        lastPushed = buf;
+        log(`← remote: stream end (${buf.length} chars) "${buf.slice(0, 80)}"`);
+        navigator.clipboard.writeText(buf).then(
+          () => log("← remote: writeText succeeded"),
+          (err) => log("← remote: writeText FAILED", err?.name, err?.message),
+        );
       };
     };
 
     const pollInterval = window.setInterval(() => {
-      void syncFromLocalClipboard();
+      void syncFromLocalClipboard("poll");
     }, 500);
 
-    const onFocus = () => void syncFromLocalClipboard();
+    const onFocus = () => {
+      log("event: window focus");
+      void syncFromLocalClipboard("focus");
+    };
+    const onMouseEnter = () => {
+      void syncFromLocalClipboard("mouseenter");
+    };
     window.addEventListener("focus", onFocus);
-    container.addEventListener("mouseenter", onFocus);
+    container.addEventListener("mouseenter", onMouseEnter);
 
-    // Fallback for cases where the browser DOES surface a paste event.
+    // Fallback paste event.
     const onPaste = (e: ClipboardEvent) => {
-      const text = e.clipboardData?.getData("text/plain");
-      if (text && text !== lastPushed) pushTextToRemote(text);
+      const text = e.clipboardData?.getData("text/plain") ?? "";
+      log(`event: paste len=${text.length} target=${(e.target as Element)?.tagName}`);
+      if (text && text !== lastPushed) pushTextToRemote(text, "paste-event");
     };
     window.addEventListener("paste", onPaste);
 
-    void syncFromLocalClipboard();
+    // Detect Cmd/Ctrl+V keydown — for diagnostic logging only. We can't
+    // synchronously read the clipboard here (readText is async), but
+    // documenting that the keystroke happened helps debug timing.
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === "v" || e.key === "V")) {
+        log(`event: Cmd/Ctrl+V keydown — lastPushed len=${lastPushed.length}`);
+        void syncFromLocalClipboard("ctrl-v");
+      }
+      if ((e.metaKey || e.ctrlKey) && (e.key === "c" || e.key === "C")) {
+        log("event: Cmd/Ctrl+C keydown");
+      }
+    };
+    window.addEventListener("keydown", onKeyDown, true);
+
+    void syncFromLocalClipboard("mount");
 
     return () => {
       try {
@@ -253,7 +317,8 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
         window.clearInterval(pollInterval);
         window.removeEventListener("focus", onFocus);
         window.removeEventListener("paste", onPaste);
-        container.removeEventListener("mouseenter", onFocus);
+        window.removeEventListener("keydown", onKeyDown, true);
+        container.removeEventListener("mouseenter", onMouseEnter);
       } catch {
         // best-effort
       }
