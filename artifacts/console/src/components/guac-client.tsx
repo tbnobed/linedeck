@@ -186,7 +186,11 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
 
   return (
     <div className="relative w-full h-full bg-black overflow-hidden">
-      <div ref={containerRef} className="w-full h-full flex items-center justify-center" />
+      <div
+        ref={containerRef}
+        className="w-full h-full flex items-center justify-center"
+        style={{ cursor: "none" }}
+      />
       {phase === "connecting" && (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground bg-black/60 pointer-events-none">
           <Loader2 className="w-6 h-6 animate-spin mb-2" />
