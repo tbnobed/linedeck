@@ -171,14 +171,24 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
     };
 
     // ── Clipboard sync (text/plain), bidirectional.
-    //   local → remote: only triggered by real user gestures — the native
-    //     'paste' event (window-level catches it even without a focused
-    //     input) and Cmd/Ctrl+V keydown. Polling navigator.clipboard.readText
-    //     here would make Firefox show its "Paste" permission button on
-    //     every poll, blocking the page.
-    //   remote → local: subscribe to client.onclipboard and write the streamed
-    //     text into navigator.clipboard.
+    //
+    // Strategy:
+    //   - On browsers that have AUTO-GRANTED clipboard-read (Chrome/Edge on
+    //     HTTPS), poll navigator.clipboard.readText() every 500ms so the
+    //     remote always has the latest text BEFORE Ctrl+V is processed there.
+    //   - On browsers where the permission is 'prompt' (Firefox), polling
+    //     readText() would spawn Firefox's "Paste" UI overlay on every tick
+    //     and block typing — so we skip polling and rely on the native
+    //     `paste` event + `copy` event instead.
+    //   - Either way, subscribe to permission changes — if the user grants
+    //     clipboard-read later (e.g. clicks Firefox's Paste button once),
+    //     polling kicks in automatically.
+    //   - Outbound `copy` event: when the user copies on the local page,
+    //     forward the selection to the remote too.
+    //   - Remote → local: subscribe to client.onclipboard and write to
+    //     navigator.clipboard.
     let lastSynced = "";
+    let pollEnabled = false;
     const tag = `[Clipboard #${connectionId}]`;
     // eslint-disable-next-line no-console
     const warn = (...a: unknown[]) => console.warn(tag, ...a);
@@ -199,6 +209,40 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
       }
     };
 
+    const tryReadAndPush = () => {
+      if (!pollEnabled || !document.hasFocus() || !navigator.clipboard?.readText) return;
+      navigator.clipboard.readText().then(
+        (text) => {
+          if (text && text !== lastSynced) pushTextToRemote(text);
+        },
+        () => {
+          // Permission was revoked between checks — stop polling until granted again.
+          pollEnabled = false;
+        },
+      );
+    };
+
+    // Probe & subscribe to clipboard-read permission state.
+    type PermStatus = { state: PermissionState; onchange: ((this: PermissionStatus, ev: Event) => unknown) | null };
+    const perms = (navigator as Navigator & { permissions?: { query: (q: { name: PermissionName }) => Promise<PermStatus> } }).permissions;
+    let permStatus: PermStatus | null = null;
+    perms
+      ?.query({ name: "clipboard-read" as PermissionName })
+      .then((status) => {
+        permStatus = status;
+        pollEnabled = status.state === "granted";
+        status.onchange = () => {
+          pollEnabled = status.state === "granted";
+          if (pollEnabled) tryReadAndPush();
+        };
+        if (pollEnabled) tryReadAndPush();
+      })
+      .catch(() => {
+        // Permissions API or 'clipboard-read' not supported — leave polling off.
+      });
+
+    const pollInterval = window.setInterval(tryReadAndPush, 500);
+
     // Inbound: remote copy → local clipboard.
     client.onclipboard = (stream, mimetype) => {
       if (!mimetype.startsWith("text/")) return;
@@ -215,17 +259,16 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
       };
     };
 
-    // Outbound: trust the native paste event — its clipboardData is available
-    // synchronously, no readText() call (and therefore no Firefox prompt).
-    const onPaste = (e: ClipboardEvent) => {
+    // Outbound via native events — works even when polling is disabled.
+    const onCopyOrPaste = (e: ClipboardEvent) => {
       const text = e.clipboardData?.getData("text/plain") ?? "";
       if (text && text !== lastSynced) pushTextToRemote(text);
     };
-    window.addEventListener("paste", onPaste);
+    window.addEventListener("copy", onCopyOrPaste);
+    window.addEventListener("paste", onCopyOrPaste);
 
-    // Cmd/Ctrl+V: a true user gesture, so readText() is allowed without UI
-    // prompt. Use it to cover the case where the user copied something
-    // outside the browser and then Ctrl+V'd into the remote.
+    // Cmd/Ctrl+V keydown — a real user gesture, so readText() is allowed
+    // even on Firefox without re-triggering the persistent Paste overlay.
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && (e.key === "v" || e.key === "V")) {
         navigator.clipboard?.readText().then(
@@ -233,7 +276,7 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
             if (text && text !== lastSynced) pushTextToRemote(text);
           },
           () => {
-            // permission denied — falls back to onPaste handler above.
+            // ignored — paste/copy events will catch it
           },
         );
       }
@@ -246,7 +289,10 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
         keyboard.onkeydown = null;
         keyboard.onkeyup = null;
         client.onclipboard = null;
-        window.removeEventListener("paste", onPaste);
+        window.clearInterval(pollInterval);
+        if (permStatus) permStatus.onchange = null;
+        window.removeEventListener("copy", onCopyOrPaste);
+        window.removeEventListener("paste", onCopyOrPaste);
         window.removeEventListener("keydown", onKeyDown, true);
       } catch {
         // best-effort
