@@ -59,17 +59,31 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
           setMessage(status?.message ?? "Guacamole connection error");
         };
 
-        const params = new URLSearchParams({
-          token: authToken,
-          GUAC_DATA_SOURCE: effectiveDs,
-          GUAC_ID: String(connectionId),
-          GUAC_TYPE: "c",
-          GUAC_WIDTH: String(Math.max(640, containerRef.current?.clientWidth ?? 1024)),
-          GUAC_HEIGHT: String(Math.max(360, containerRef.current?.clientHeight ?? 768)),
-          GUAC_DPI: "96",
-        });
+        // Build connect string the way Apache Guacamole's own frontend does.
+        // URLSearchParams collapses repeated keys, so build manually so the
+        // multi-value GUAC_AUDIO / GUAC_VIDEO / GUAC_IMAGE lists survive.
+        const supportedImages = ["image/png", "image/jpeg", "image/webp"];
+        const supportedAudio: string[] = [];
+        const supportedVideo: string[] = [];
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+        const enc = encodeURIComponent;
+        const width = Math.max(640, containerRef.current?.clientWidth ?? 1024);
+        const height = Math.max(360, containerRef.current?.clientHeight ?? 768);
+        const dpi = Math.round(window.devicePixelRatio * 96) || 96;
+        const connectStr =
+          `token=${enc(authToken)}` +
+          `&GUAC_DATA_SOURCE=${enc(effectiveDs)}` +
+          `&GUAC_ID=${enc(String(connectionId))}` +
+          `&GUAC_TYPE=c` +
+          `&GUAC_WIDTH=${width}` +
+          `&GUAC_HEIGHT=${height}` +
+          `&GUAC_DPI=${dpi}` +
+          `&GUAC_TIMEZONE=${enc(tz)}` +
+          supportedAudio.map((m) => `&GUAC_AUDIO=${enc(m)}`).join("") +
+          supportedVideo.map((m) => `&GUAC_VIDEO=${enc(m)}`).join("") +
+          supportedImages.map((m) => `&GUAC_IMAGE=${enc(m)}`).join("");
 
-        client.connect(params.toString());
+        client.connect(connectStr);
       } catch (err) {
         if (cancelled) return;
         setPhase("error");
