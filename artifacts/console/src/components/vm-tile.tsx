@@ -162,33 +162,33 @@ export function VmTile({
 
   // Three modes:
   //   1. `fill` — the focused-VM view (sidebar / ?vm= route) fills its parent.
-  //   2. grid + fullscreen — the tile's own maximize button overlays the entire
-  //      viewport (covers sidebar too) via `position: fixed`.
+  //   2. grid + fullscreen — the tile's own wrapper is promoted to
+  //      `position: fixed` over the viewport. The wrapper stays in the SAME
+  //      React subtree across both states (only its className changes), so
+  //      GuacClient (and its WebSocket) is never unmounted.
   //   3. grid normal — a 300px grid slot.
   if (fill) {
     return <div className="h-full w-full">{TileChrome}</div>;
   }
-  // Portal the fullscreen overlay to document.body so it lives in the root
-  // stacking context — otherwise sibling grid tiles (with their opacity-animated
-  // wrappers) form local stacking contexts that can render OVER the fixed
-  // backdrop. React portals preserve component identity, so GuacClient's
-  // WebSocket survives the toggle.
-  if (isFullscreen) {
-    return (
-      <>
-        <div className="h-[300px]" />
-        {createPortal(
-          <div className="fixed inset-0 z-[9999]">
-            <div
-              className="absolute inset-0 bg-black/85"
-              onClick={() => setIsFullscreen(false)}
-            />
-            <div className="absolute inset-[2vh] shadow-2xl">{TileChrome}</div>
-          </div>,
+  return (
+    <div className="h-[300px]">
+      <div
+        className={
+          isFullscreen
+            ? "fixed inset-[2vh] z-[9999] shadow-2xl"
+            : "h-full w-full"
+        }
+      >
+        {TileChrome}
+      </div>
+      {isFullscreen &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9998] bg-black/85"
+            onClick={() => setIsFullscreen(false)}
+          />,
           document.body,
         )}
-      </>
-    );
-  }
-  return <div className="h-[300px]">{TileChrome}</div>;
+    </div>
+  );
 }
