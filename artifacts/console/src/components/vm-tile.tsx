@@ -1,19 +1,24 @@
 import { useState, useEffect, useRef } from "react";
 import type { Vm, Line } from "@workspace/api-client-react";
-import { Maximize2, Phone, User, Minimize2 } from "lucide-react";
+import { Maximize2, Phone, User, X } from "lucide-react";
 import { GuacClient } from "./guac-client";
 
 interface VmTileProps {
   vm: Vm;
   lineState: Line;
   pcrName?: string | null;
-  /** When true, fills the parent (no fixed height, no expand-overlay). Used by the focused-VM view. */
+  /**
+   * When true, fills the parent (no fixed height, no internal maximize button).
+   * Used by the focused-VM view (sidebar / `?vm=` route), which provides its
+   * own Close affordance.
+   */
   fill?: boolean;
-  /** Replaces the maximize button. When provided, this callback is called when the user clicks the chrome's primary action. */
+  /**
+   * Optional override for the chrome's primary action button. When provided in
+   * `fill` mode it acts as the Close action; in grid mode, omitting this lets
+   * the tile use its built-in fullscreen overlay toggle.
+   */
   onPrimaryAction?: () => void;
-  /** Custom icon for the primary action button. */
-  primaryActionIcon?: React.ReactNode;
-  primaryActionTitle?: string;
   onStateChange: () => void;
   onLabelChange: (label: string) => void;
 }
@@ -24,12 +29,10 @@ export function VmTile({
   pcrName,
   fill,
   onPrimaryAction,
-  primaryActionIcon,
-  primaryActionTitle,
   onStateChange,
   onLabelChange,
 }: VmTileProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [localLabel, setLocalLabel] = useState(lineState.label);
   const labelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -59,7 +62,7 @@ export function VmTile({
         <GuacClient
           connectionId={vm.guacConnectionId}
           dataSource={vm.guacDataSource || "mysql"}
-          interactive={isExpanded}
+          interactive={!!fill || isFullscreen}
         />
       ) : vm.url ? (
         <iframe
@@ -73,7 +76,7 @@ export function VmTile({
           No source configured
         </div>
       )}
-      {!isExpanded && vm.guacConnectionId == null && (
+      {!fill && !isFullscreen && vm.guacConnectionId == null && (
         <div className="absolute inset-0 z-10" />
       )}
     </div>
@@ -113,13 +116,15 @@ export function VmTile({
             </div>
           )}
         </div>
-        <button
-          onClick={onPrimaryAction ?? (() => setIsExpanded(!isExpanded))}
-          className="p-1 hover:bg-background/20 rounded opacity-50 hover:opacity-100 transition-opacity"
-          title={primaryActionTitle ?? (isExpanded ? "Collapse" : "Expand")}
-        >
-          {primaryActionIcon ?? (isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />)}
-        </button>
+        {(onPrimaryAction || !fill) && (
+          <button
+            onClick={onPrimaryAction ?? (() => setIsFullscreen((v) => !v))}
+            className="p-1 hover:bg-background/20 rounded opacity-50 hover:opacity-100 transition-opacity"
+            title={fill || isFullscreen ? "Close" : "Expand"}
+          >
+            {fill || isFullscreen ? <X className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+        )}
       </div>
 
       {ScreenSurface}
@@ -154,24 +159,26 @@ export function VmTile({
     </div>
   );
 
-  // Two modes: standard 300px grid-slot tile, or `fill` mode (used by the
-  // focused-VM view) where the tile fills its parent container.
+  // Three modes:
+  //   1. `fill` — the focused-VM view (sidebar / ?vm= route) fills its parent.
+  //   2. grid + fullscreen — the tile's own maximize button overlays the entire
+  //      viewport (covers sidebar too) via `position: fixed`.
+  //   3. grid normal — a 300px grid slot.
   if (fill) {
     return <div className="h-full w-full">{TileChrome}</div>;
   }
-
   return (
     <div className="h-[300px] relative">
-      {isExpanded && (
+      {isFullscreen && (
         <div
           className="fixed inset-0 z-40 bg-black/80"
-          onClick={() => setIsExpanded(false)}
+          onClick={() => setIsFullscreen(false)}
         />
       )}
       <div
         className={
-          isExpanded
-            ? "fixed inset-[5vh] z-50 shadow-2xl"
+          isFullscreen
+            ? "fixed inset-[2vh] z-50 shadow-2xl"
             : "absolute inset-0"
         }
       >
