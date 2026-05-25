@@ -64,15 +64,31 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
         }
 
         // Fit the (potentially much larger) remote display into our tile.
+        // CRITICAL: `display.scale()` applies a CSS transform, which leaves
+        // the displayEl's intrinsic (offset / bounding-rect) size at the
+        // remote's native dimensions — e.g. 1280×800 — even though it
+        // visually renders much smaller. Guacamole.Mouse computes local
+        // coordinates against the displayEl's bounding rect, so without
+        // forcing an explicit scaled size the mouse Y axis can go all the
+        // way to 800 even when the visible tile is only ~320px tall, and
+        // any cursor below the visually-scaled region falls outside the
+        // hit area entirely (= "only the top of the VM is clickable").
         const fit = () => {
-          if (!containerRef.current) return;
+          if (!containerRef.current || !displayEl) return;
           const dw = display.getWidth();
           const dh = display.getHeight();
           if (!dw || !dh) return;
           const cw = containerRef.current.clientWidth;
           const ch = containerRef.current.clientHeight;
           const scale = Math.min(cw / dw, ch / dh);
-          if (scale > 0 && isFinite(scale)) display.scale(scale);
+          if (scale > 0 && isFinite(scale)) {
+            display.scale(scale);
+            // Lock the element box to the visually-scaled size so
+            // Guacamole.Mouse's element-relative math matches the pixels
+            // the user actually sees and clicks on.
+            displayEl.style.width = `${Math.round(dw * scale)}px`;
+            displayEl.style.height = `${Math.round(dh * scale)}px`;
+          }
         };
         display.onresize = fit;
         const ro = new ResizeObserver(fit);
