@@ -173,11 +173,78 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
       client.sendKeyEvent(0, sym);
     };
 
+    // ── Clipboard sync (text/plain). Two directions:
+    //   local → remote: push current navigator.clipboard text into the remote
+    //     clipboard whenever the tile gains focus or the user presses paste.
+    //     Done proactively so Ctrl+V inside the remote pastes the local text.
+    //   remote → local: when the remote copies (Ctrl+C inside the VM), it
+    //     sends a clipboard stream we read and write to navigator.clipboard.
+    const pushLocalClipboardToRemote = async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (!text) return;
+        const stream = client.createClipboardStream("text/plain");
+        const writer = new Guacamole.StringWriter(stream);
+        writer.sendText(text);
+        writer.sendEnd();
+      } catch {
+        // Clipboard read may be blocked (no focus / no permission). Silently
+        // ignore — the user can still type, and remote→local copy still works.
+      }
+    };
+
+    // Pull text/plain out of an inbound Guacamole clipboard stream.
+    const installInboundClipboard = () => {
+      client.onclipboard = (stream, mimetype) => {
+        if (!mimetype.startsWith("text/")) return;
+        const reader = new Guacamole.StringReader(stream);
+        let buf = "";
+        reader.ontext = (text: string) => {
+          buf += text;
+        };
+        reader.onend = () => {
+          navigator.clipboard.writeText(buf).catch(() => {
+            // Write may be blocked without a user gesture or focus; fine.
+          });
+        };
+      };
+    };
+    installInboundClipboard();
+
+    // Browser paste (Cmd/Ctrl+V) — capture before keyboard handlers fire and
+    // push the pasted text into the remote clipboard. The keyboard event
+    // itself still goes through, triggering paste inside the remote app.
+    const onPaste = (e: ClipboardEvent) => {
+      const text = e.clipboardData?.getData("text/plain");
+      if (!text) return;
+      const stream = client.createClipboardStream("text/plain");
+      const writer = new Guacamole.StringWriter(stream);
+      writer.sendText(text);
+      writer.sendEnd();
+    };
+
+    // Browser copy (Cmd/Ctrl+C) — also nudge a local→remote push so the next
+    // remote paste picks up the most recent local clipboard contents.
+    const onCopyOrFocus = () => {
+      void pushLocalClipboardToRemote();
+    };
+
+    window.addEventListener("paste", onPaste);
+    window.addEventListener("focus", onCopyOrFocus);
+    container.addEventListener("mouseenter", onCopyOrFocus);
+
+    // Prime once on mount.
+    void pushLocalClipboardToRemote();
+
     return () => {
       try {
         mouse.offEach(["mousedown", "mouseup", "mousemove"], () => true);
         keyboard.onkeydown = null;
         keyboard.onkeyup = null;
+        client.onclipboard = null;
+        window.removeEventListener("paste", onPaste);
+        window.removeEventListener("focus", onCopyOrFocus);
+        container.removeEventListener("mouseenter", onCopyOrFocus);
       } catch {
         // best-effort
       }
