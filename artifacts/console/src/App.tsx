@@ -7,6 +7,7 @@ import { Layout } from "@/components/layout";
 import { GridPage } from "@/pages/grid";
 import { ConfigPage } from "@/pages/config";
 import { RoomPage } from "@/pages/room";
+import HelpPage from "@/pages/help";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ function Router() {
           <Switch>
             <Route path="/" component={GridPage} />
             <Route path="/vms" component={ConfigPage} />
+            <Route path="/help" component={HelpPage} />
             <Route component={NotFound} />
           </Switch>
         </Layout>

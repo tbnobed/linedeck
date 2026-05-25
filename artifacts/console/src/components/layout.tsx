@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Monitor, Settings, LayoutGrid, Tv2, Plus } from "lucide-react";
+import { Monitor, Settings, LayoutGrid, Tv2, Plus, HelpCircle } from "lucide-react";
 import { useListVms, useListPcrs } from "@workspace/api-client-react";
 import { Logo } from "@/components/logo";
 
@@ -78,7 +78,7 @@ export function Layout({ children }: { children: ReactNode }) {
           ))}
         </div>
 
-        <div className="p-4 border-t border-border shrink-0">
+        <div className="p-4 border-t border-border shrink-0 flex flex-col gap-1">
           <Link
             href="/vms"
             className={`flex items-center gap-2 px-2 py-2 rounded-md transition-colors text-sm ${
@@ -89,6 +89,17 @@ export function Layout({ children }: { children: ReactNode }) {
           >
             <Settings className="w-4 h-4" />
             <span>Configuration</span>
+          </Link>
+          <Link
+            href="/help"
+            className={`flex items-center gap-2 px-2 py-2 rounded-md transition-colors text-sm ${
+              location === "/help"
+                ? "bg-secondary text-secondary-foreground font-medium"
+                : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+            }`}
+          >
+            <HelpCircle className="w-4 h-4" />
+            <span>Help</span>
           </Link>
         </div>
       </aside>

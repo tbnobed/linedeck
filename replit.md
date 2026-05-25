@@ -68,6 +68,45 @@ Designed to coexist with other stacks on the same host: containers are prefixed 
 
 NPM proxy host settings worth setting: enable **Websockets Support** (Guacamole tunnel) and add a custom location for `/api/events` with `proxy_buffering off;` and a long read timeout (e.g. `proxy_read_timeout 3600s;`) so SSE streams don't get buffered or cut.
 
+### HTTPS / TLS (mkcert)
+
+LineDeck runs on an internal hostname with no public DNS, so Let's Encrypt is not an option. We use [mkcert](https://github.com/FiloSottile/mkcert) to issue a locally-trusted cert and serve it from NPM. **HTTPS is required for clipboard sync** — browsers refuse `navigator.clipboard` on plain HTTP.
+
+One-time on the docker host:
+
+```bash
+# Install mkcert + the local root CA
+sudo apt install -y libnss3-tools
+curl -JLO "https://dl.filippo.io/mkcert/latest?for=linux/amd64" && chmod +x mkcert-* && sudo mv mkcert-* /usr/local/bin/mkcert
+mkcert -install
+
+# Issue the LineDeck leaf cert (covers apex + wildcard under the parent zone)
+cd ~/linedeck
+mkcert line.trinity.local "*.trinity.local"
+
+# Export the root CA for operator workstations
+cp "$(mkcert -CAROOT)/rootCA.pem" ./linedeck-rootCA.crt
+```
+
+In NPM (**SSL Certificates → Add Custom Certificate**):
+- **Certificate Key** ← `line.trinity.local+1-key.pem`
+- **Certificate** ← `line.trinity.local+1.pem`
+- Intermediate ← *empty*
+
+Then on the proxy host: **SSL** tab → select that cert, enable **Force SSL** and **HTTP/2**. Do **not** paste `rootCA.pem` here — it has `keyUsage: keyCertSign` only and browsers will reject it with `ERR_SSL_KEY_USAGE_INCOMPATIBLE`.
+
+Distribute `linedeck-rootCA.crt` to every operator workstation:
+- **Windows (Chrome/Edge):** double-click → Install Certificate → Local Machine → Trusted Root Certification Authorities
+- **Firefox:** has its own store. Either `about:config` → `security.enterprise_roots.enabled = true`, or import via Settings → Privacy & Security → View Certificates → Authorities → Import
+- **macOS:** double-click → System keychain → "Always Trust" for SSL
+
+### Guacamole reverse-proxy
+
+The frontend connects to Guacamole through the API server at `/api/guac-proxy` (see `artifacts/api-server/src/app.ts` + `index.ts` for the WebSocket upgrade wiring). This keeps everything same-origin, so:
+- An HTTPS page produces a `wss://` tunnel automatically (no mixed-content blocking)
+- Operators don't need direct network access to the Guacamole server
+- `GUACAMOLE_URL` only needs to be reachable from the LineDeck container, not the browser
+
 ## Gotchas
 
 - After any `openapi.yaml` change, always run `pnpm --filter @workspace/api-spec run codegen` before working on frontend or backend

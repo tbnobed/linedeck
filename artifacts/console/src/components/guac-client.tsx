@@ -40,8 +40,6 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
         const tunnelUrl = /^https?:/i.test(baseUrl)
           ? `${baseUrl.replace(/^http/i, "ws")}/websocket-tunnel`
           : `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}${baseUrl}/websocket-tunnel`;
-        // eslint-disable-next-line no-console
-        console.log(`[GuacClient #${connectionId}] tunnel URL`, tunnelUrl);
 
         const tunnel = new Guacamole.WebSocketTunnel(tunnelUrl);
         client = new Guacamole.Client(tunnel);
@@ -74,9 +72,6 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
         (client as unknown as { __ro?: ResizeObserver }).__ro = ro;
 
         client.onstatechange = (state) => {
-          const names = ["idle", "connecting", "waiting", "connected", "disconnecting", "disconnected"];
-          // eslint-disable-next-line no-console
-          console.log(`[GuacClient #${connectionId}] state →`, names[state] ?? state);
           if (state === 3) {
             setPhase("connected");
             fit();
@@ -97,11 +92,6 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
           setMessage(
             `tunnel: ${status?.message ?? "unknown"} (code ${(status as { code?: number })?.code ?? "?"})`,
           );
-        };
-        tunnel.onstatechange = (state) => {
-          const names = ["connecting", "open", "closed", "unstable"];
-          // eslint-disable-next-line no-console
-          console.log(`[GuacClient #${connectionId}] tunnel →`, names[state] ?? state);
         };
 
         // Build connect string the way Apache Guacamole's own frontend does.
@@ -190,130 +180,81 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
     //   remote → local: subscribe to client.onclipboard and write the streamed
     //     text into navigator.clipboard.
     let lastPushed = "";
-    let pollTick = 0;
-    let lastDeniedLogged = 0;
     const tag = `[Clipboard #${connectionId}]`;
     // eslint-disable-next-line no-console
-    const log = (...a: unknown[]) => console.log(tag, ...a);
+    const warn = (...a: unknown[]) => console.warn(tag, ...a);
 
-    log("init", {
-      secureContext: window.isSecureContext,
-      hasClipboardApi: !!navigator.clipboard,
-      hasReadText: !!navigator.clipboard?.readText,
-      hasWriteText: !!navigator.clipboard?.writeText,
-      hasFocus: document.hasFocus(),
-      hasStringWriter: !!(Guacamole as unknown as { StringWriter?: unknown }).StringWriter,
-      hasStringReader: !!(Guacamole as unknown as { StringReader?: unknown }).StringReader,
-      hasCreateClipboardStream: typeof (client as unknown as { createClipboardStream?: unknown }).createClipboardStream === "function",
-    });
-
-    // One-shot permission probe.
-    try {
-      const perms = (navigator as unknown as { permissions?: { query: (q: { name: string }) => Promise<{ state: string }> } }).permissions;
-      perms?.query({ name: "clipboard-read" }).then(
-        (p) => log("permission clipboard-read =", p.state),
-        (e) => log("permission query failed", e),
-      );
-    } catch (e) {
-      log("permission probe threw", e);
+    if (!window.isSecureContext || !navigator.clipboard) {
+      warn("clipboard sync disabled — page must be served over HTTPS");
     }
 
-    const pushTextToRemote = (text: string, source: string) => {
+    const pushTextToRemote = (text: string) => {
       try {
-        log(`→ remote (${source}, ${text.length} chars)`, JSON.stringify(text.slice(0, 80)));
         const stream = client.createClipboardStream("text/plain");
         const writer = new Guacamole.StringWriter(stream);
         writer.sendText(text);
         writer.sendEnd();
         lastPushed = text;
-        log("→ remote: stream end sent");
       } catch (err) {
-        log("→ remote PUSH FAILED", err);
+        warn("push to remote failed", err);
       }
     };
 
-    const syncFromLocalClipboard = async (source: string) => {
-      pollTick++;
-      if (!document.hasFocus()) {
-        if (pollTick % 20 === 0) log(`poll skip (no focus) tick=${pollTick}`);
-        return;
-      }
+    const syncFromLocalClipboard = async () => {
+      if (!document.hasFocus() || !navigator.clipboard?.readText) return;
       try {
         const text = await navigator.clipboard.readText();
-        if (pollTick % 20 === 0) log(`poll read ok (${source}) len=${text?.length ?? 0}`);
-        if (text && text !== lastPushed) {
-          log(`local clipboard changed via ${source}: "${text.slice(0, 80)}"`);
-          pushTextToRemote(text, source);
-        }
-      } catch (err) {
-        const now = Date.now();
-        if (now - lastDeniedLogged > 5000) {
-          log(`readText denied (${source})`, (err as Error)?.name, (err as Error)?.message);
-          lastDeniedLogged = now;
-        }
+        if (text && text !== lastPushed) pushTextToRemote(text);
+      } catch {
+        // readText denied — user hasn't granted clipboard permission yet.
       }
     };
 
     // Inbound: remote copy → local clipboard.
     client.onclipboard = (stream, mimetype) => {
-      log(`← remote: clipboard stream opened, mimetype=${mimetype}`);
-      if (!mimetype.startsWith("text/")) {
-        log("← remote: ignoring non-text mimetype");
-        return;
-      }
+      if (!mimetype.startsWith("text/")) return;
       const reader = new Guacamole.StringReader(stream);
       let buf = "";
       reader.ontext = (text: string) => {
         buf += text;
-        log(`← remote: chunk len=${text.length} total=${buf.length}`);
       };
       reader.onend = () => {
         lastPushed = buf;
-        log(`← remote: stream end (${buf.length} chars) "${buf.slice(0, 80)}"`);
-        navigator.clipboard.writeText(buf).then(
-          () => log("← remote: writeText succeeded"),
-          (err) => log("← remote: writeText FAILED", err?.name, err?.message),
+        navigator.clipboard?.writeText(buf).catch((err) =>
+          warn("writeText failed", err?.name, err?.message),
         );
       };
     };
 
     const pollInterval = window.setInterval(() => {
-      void syncFromLocalClipboard("poll");
+      void syncFromLocalClipboard();
     }, 500);
 
     const onFocus = () => {
-      log("event: window focus");
-      void syncFromLocalClipboard("focus");
+      void syncFromLocalClipboard();
     };
     const onMouseEnter = () => {
-      void syncFromLocalClipboard("mouseenter");
+      void syncFromLocalClipboard();
     };
     window.addEventListener("focus", onFocus);
     container.addEventListener("mouseenter", onMouseEnter);
 
-    // Fallback paste event.
+    // Fallback paste event (fires when a focusable element is focused).
     const onPaste = (e: ClipboardEvent) => {
       const text = e.clipboardData?.getData("text/plain") ?? "";
-      log(`event: paste len=${text.length} target=${(e.target as Element)?.tagName}`);
-      if (text && text !== lastPushed) pushTextToRemote(text, "paste-event");
+      if (text && text !== lastPushed) pushTextToRemote(text);
     };
     window.addEventListener("paste", onPaste);
 
-    // Detect Cmd/Ctrl+V keydown — for diagnostic logging only. We can't
-    // synchronously read the clipboard here (readText is async), but
-    // documenting that the keystroke happened helps debug timing.
+    // Cmd/Ctrl+V: re-sync immediately so the remote sees fresh clipboard.
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && (e.key === "v" || e.key === "V")) {
-        log(`event: Cmd/Ctrl+V keydown — lastPushed len=${lastPushed.length}`);
-        void syncFromLocalClipboard("ctrl-v");
-      }
-      if ((e.metaKey || e.ctrlKey) && (e.key === "c" || e.key === "C")) {
-        log("event: Cmd/Ctrl+C keydown");
+        void syncFromLocalClipboard();
       }
     };
     window.addEventListener("keydown", onKeyDown, true);
 
-    void syncFromLocalClipboard("mount");
+    void syncFromLocalClipboard();
 
     return () => {
       try {
