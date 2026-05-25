@@ -90,7 +90,7 @@ export function VmTile({
           ? "border-destructive shadow-[0_0_15px_rgba(220,38,38,0.3)]"
           : isStandby
             ? "border-yellow-500/50"
-            : "border-border/60 opacity-80 hover:opacity-100"
+            : "border-border/60"
       }`}
     >
       {/* Header */}
