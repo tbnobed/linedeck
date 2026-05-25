@@ -331,12 +331,7 @@ function RoomsTab() {
       const willBeAssigned = selectedVmIds.has(vm.id);
       if (wasAssigned === willBeAssigned) continue;
       updates.push(
-        new Promise<void>((resolve) =>
-          updateVm.mutate(
-            { id: vm.id, data: { pcrId: willBeAssigned ? assigningPcr.id : null } },
-            { onSettled: () => resolve() }
-          )
-        )
+        updateVm.mutateAsync({ id: vm.id, data: { pcrId: willBeAssigned ? assigningPcr.id : null } })
       );
     }
 
