@@ -292,11 +292,59 @@ function RoomsTab() {
   const createPcr = useCreatePcr();
   const updatePcr = useUpdatePcr();
   const deletePcr = useDeletePcr();
+  const updateVm = useUpdateVm();
   const queryClient = useQueryClient();
 
   const [isEditing, setIsEditing] = useState<number | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [pcrName, setPcrName] = useState("");
+
+  // Assign dialog state
+  const [assigningPcr, setAssigningPcr] = useState<{ id: number; name: string } | null>(null);
+  const [selectedVmIds, setSelectedVmIds] = useState<Set<number>>(new Set());
+  const [isSaving, setIsSaving] = useState(false);
+
+  const openAssign = (pcr: { id: number; name: string }) => {
+    const alreadyAssigned = new Set(
+      (vms ?? []).filter((v) => v.pcrId === pcr.id).map((v) => v.id)
+    );
+    setSelectedVmIds(alreadyAssigned);
+    setAssigningPcr(pcr);
+  };
+
+  const toggleVm = (vmId: number) => {
+    setSelectedVmIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(vmId)) next.delete(vmId);
+      else next.add(vmId);
+      return next;
+    });
+  };
+
+  const handleSaveAssignments = async () => {
+    if (!assigningPcr || !vms) return;
+    setIsSaving(true);
+
+    const updates: Promise<unknown>[] = [];
+    for (const vm of vms) {
+      const wasAssigned = vm.pcrId === assigningPcr.id;
+      const willBeAssigned = selectedVmIds.has(vm.id);
+      if (wasAssigned === willBeAssigned) continue;
+      updates.push(
+        new Promise<void>((resolve) =>
+          updateVm.mutate(
+            { id: vm.id, data: { pcrId: willBeAssigned ? assigningPcr.id : null } },
+            { onSettled: () => resolve() }
+          )
+        )
+      );
+    }
+
+    await Promise.all(updates);
+    await queryClient.invalidateQueries({ queryKey: getListVmsQueryKey() });
+    setIsSaving(false);
+    setAssigningPcr(null);
+  };
 
   const handleEdit = (pcr: any) => {
     setPcrName(pcr.name);
@@ -331,11 +379,7 @@ function RoomsTab() {
   };
 
   const handleDelete = (id: number) => {
-    if (
-      confirm(
-        "Delete this room? VMs assigned to it will become unassigned, but won't be deleted."
-      )
-    ) {
+    if (confirm("Delete this room? VMs assigned to it will become unassigned, but won't be deleted.")) {
       deletePcr.mutate(
         { id },
         {
@@ -350,15 +394,12 @@ function RoomsTab() {
 
   if (isLoading) return null;
 
+  const sortedVms = (vms ?? []).slice().sort((a, b) => a.position - b.position);
+
   return (
     <>
       <div className="flex justify-end mb-4">
-        <Button
-          onClick={() => {
-            setPcrName("");
-            setIsAdding(true);
-          }}
-        >
+        <Button onClick={() => { setPcrName(""); setIsAdding(true); }}>
           <Plus className="w-4 h-4 mr-2" />
           Add Room
         </Button>
@@ -372,17 +413,27 @@ function RoomsTab() {
         ) : (
           <div className="divide-y divide-border">
             {pcrs?.map((pcr) => {
-              const count = vms?.filter((v) => v.pcrId === pcr.id).length ?? 0;
+              const assigned = (vms ?? []).filter((v) => v.pcrId === pcr.id);
               return (
                 <div key={pcr.id} className="flex items-center p-4 hover:bg-muted/50 transition-colors">
                   <Tv2 className="w-5 h-5 text-muted-foreground mr-4 shrink-0" />
                   <div className="flex-1">
                     <div className="font-semibold">{pcr.name}</div>
                     <div className="text-xs text-muted-foreground mt-0.5">
-                      {count} system{count !== 1 ? "s" : ""} assigned
+                      {assigned.length > 0
+                        ? assigned.map((v) => v.name).join(", ")
+                        : "No systems assigned"}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => openAssign(pcr)}
+                    >
+                      Assign Systems
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(pcr)}>
                       <Edit2 className="w-4 h-4" />
                     </Button>
@@ -402,14 +453,63 @@ function RoomsTab() {
         )}
       </div>
 
+      {/* Assign Systems dialog */}
+      <Dialog open={assigningPcr !== null} onOpenChange={(o) => { if (!o) setAssigningPcr(null); }}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Assign Systems — {assigningPcr?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="py-2 max-h-[60vh] overflow-y-auto">
+            {sortedVms.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No systems configured yet.</p>
+            ) : (
+              <div className="divide-y divide-border">
+                {sortedVms.map((vm) => {
+                  const checked = selectedVmIds.has(vm.id);
+                  const otherPcr = vm.pcrId !== null && vm.pcrId !== assigningPcr?.id
+                    ? pcrs?.find((p) => p.id === vm.pcrId)
+                    : null;
+                  return (
+                    <label
+                      key={vm.id}
+                      className="flex items-center gap-3 px-2 py-3 hover:bg-muted/40 rounded-md cursor-pointer select-none"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleVm(vm.id)}
+                        className="w-4 h-4 accent-primary shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm">{vm.name}</div>
+                        {vm.phoneNumber && (
+                          <div className="text-xs text-muted-foreground">{vm.phoneNumber}</div>
+                        )}
+                      </div>
+                      {otherPcr && (
+                        <span className="text-xs text-muted-foreground/60 shrink-0">
+                          currently in {otherPcr.name}
+                        </span>
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAssigningPcr(null)}>Cancel</Button>
+            <Button onClick={handleSaveAssignments} disabled={isSaving}>
+              {isSaving ? "Saving…" : "Save Assignments"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add / rename room dialog */}
       <Dialog
         open={isAdding || isEditing !== null}
-        onOpenChange={(o) => {
-          if (!o) {
-            setIsAdding(false);
-            setIsEditing(null);
-          }
-        }}
+        onOpenChange={(o) => { if (!o) { setIsAdding(false); setIsEditing(null); } }}
       >
         <DialogContent className="sm:max-w-[380px]">
           <DialogHeader>
@@ -428,13 +528,7 @@ function RoomsTab() {
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsAdding(false);
-                setIsEditing(null);
-              }}
-            >
+            <Button variant="outline" onClick={() => { setIsAdding(false); setIsEditing(null); }}>
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={!pcrName.trim()}>
