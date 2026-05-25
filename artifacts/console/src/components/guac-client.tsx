@@ -53,42 +53,36 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
         if (containerRef.current) {
           containerRef.current.innerHTML = "";
           containerRef.current.appendChild(displayEl);
-          displayEl.style.display = "block";
-          displayEl.style.margin = "0 auto";
-          // Hide OS cursor ONLY when over the actual remote-display surface,
-          // so Guacamole's own cursor layer takes over. The surrounding
-          // letterbox bars keep the OS cursor visible, otherwise the cursor
-          // appears to "vanish" in the black margins on tiles whose aspect
-          // ratio doesn't match the remote desktop.
+          // Absolutely position the display at the top-left of the container.
+          // Two reasons:
+          //   1. Guacamole.Mouse computes coordinates with `offsetLeft` /
+          //      `offsetTop`, NOT getBoundingClientRect. Flex-centering the
+          //      display element places it at a position the offsetLeft walk
+          //      cannot fully account for (especially after `display.scale()`
+          //      applies a CSS transform to the inner display div), which is
+          //      what made "only the top half" of the tile clickable.
+          //   2. With `bounds` (what getElement returns) sized by Guacamole to
+          //      the scaled output, top-left anchoring gives a stable, well-
+          //      defined offset chain regardless of tile aspect ratio.
+          displayEl.style.position = "absolute";
+          displayEl.style.top = "0";
+          displayEl.style.left = "0";
           displayEl.style.cursor = "none";
         }
 
         // Fit the (potentially much larger) remote display into our tile.
-        // CRITICAL: `display.scale()` applies a CSS transform, which leaves
-        // the displayEl's intrinsic (offset / bounding-rect) size at the
-        // remote's native dimensions — e.g. 1280×800 — even though it
-        // visually renders much smaller. Guacamole.Mouse computes local
-        // coordinates against the displayEl's bounding rect, so without
-        // forcing an explicit scaled size the mouse Y axis can go all the
-        // way to 800 even when the visible tile is only ~320px tall, and
-        // any cursor below the visually-scaled region falls outside the
-        // hit area entirely (= "only the top of the VM is clickable").
+        // `display.scale()` already updates the bounds element's CSS width/
+        // height to the scaled size, which Guacamole.Mouse reads via
+        // offsetWidth/offsetHeight, so no extra sizing is required here.
         const fit = () => {
-          if (!containerRef.current || !displayEl) return;
+          if (!containerRef.current) return;
           const dw = display.getWidth();
           const dh = display.getHeight();
           if (!dw || !dh) return;
           const cw = containerRef.current.clientWidth;
           const ch = containerRef.current.clientHeight;
           const scale = Math.min(cw / dw, ch / dh);
-          if (scale > 0 && isFinite(scale)) {
-            display.scale(scale);
-            // Lock the element box to the visually-scaled size so
-            // Guacamole.Mouse's element-relative math matches the pixels
-            // the user actually sees and clicks on.
-            displayEl.style.width = `${Math.round(dw * scale)}px`;
-            displayEl.style.height = `${Math.round(dh * scale)}px`;
-          }
+          if (scale > 0 && isFinite(scale)) display.scale(scale);
         };
         display.onresize = fit;
         const ro = new ResizeObserver(fit);
@@ -343,7 +337,7 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
     <div className="relative w-full h-full bg-black overflow-hidden">
       <div
         ref={containerRef}
-        className="w-full h-full flex items-center justify-center"
+        className="w-full h-full relative"
       />
       {phase === "connecting" && (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground bg-black/60 pointer-events-none">
