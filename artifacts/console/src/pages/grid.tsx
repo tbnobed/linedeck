@@ -216,7 +216,7 @@ export function GridPage() {
         </div>
       ) : (
       /* Grid */
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4 relative">
         {filteredVms.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
             <MonitorPlay className="w-16 h-16 mb-4 opacity-20" />
