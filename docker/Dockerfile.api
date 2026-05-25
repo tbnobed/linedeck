@@ -1,5 +1,7 @@
 FROM node:24-alpine AS base
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Corepack auto-activates the version declared in package.json's packageManager
+# field once it sees the lockfile/manifest. Pinning avoids surprise upgrades.
+RUN corepack enable
 WORKDIR /app
 
 # ── Deps: install full workspace deps once (cached by lockfile).
@@ -32,7 +34,7 @@ CMD ["pnpm", "--filter", "@workspace/db", "run", "push"]
 
 # ── Runner: prod-only deps + API bundle + console static build served by Express.
 FROM node:24-alpine AS runner
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable
 WORKDIR /app
 ENV NODE_ENV=production
 
