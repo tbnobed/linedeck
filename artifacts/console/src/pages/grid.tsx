@@ -81,7 +81,7 @@ export function GridPage() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0a]">
+    <div className="flex flex-col h-full ld-grid-backdrop">
       {/* Top Bar */}
       <header className="h-14 px-4 border-b border-border bg-card flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4">
@@ -162,21 +162,26 @@ export function GridPage() {
             className="grid gap-4 auto-rows-max"
             style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
           >
-            {filteredVms.map((vm) => {
+            {filteredVms.map((vm, idx) => {
               const lineState = getLineState(vm.id);
               const pcrName =
                 pcrFilter === null && vm.pcrId != null
                   ? (pcrs?.find((p) => p.id === vm.pcrId)?.name ?? null)
                   : null;
               return (
-                <VmTile
+                <div
                   key={vm.id}
-                  vm={vm}
-                  lineState={lineState as any}
-                  pcrName={pcrName}
-                  onStateChange={() => handleStateChange(vm.id, lineState.state)}
-                  onLabelChange={(label) => handleLabelChange(vm.id, label)}
-                />
+                  className="ld-tile-enter"
+                  style={{ animationDelay: `${Math.min(idx, 16) * 45}ms` }}
+                >
+                  <VmTile
+                    vm={vm}
+                    lineState={lineState as any}
+                    pcrName={pcrName}
+                    onStateChange={() => handleStateChange(vm.id, lineState.state)}
+                    onLabelChange={(label) => handleLabelChange(vm.id, label)}
+                  />
+                </div>
               );
             })}
           </div>

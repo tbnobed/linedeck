@@ -32,6 +32,7 @@ export function VmTile({ vm, lineState, pcrName, onStateChange, onLabelChange }:
 
   const isAir = lineState.state === "onair";
   const isStandby = lineState.state === "standby";
+  const isIdle = !isAir && !isStandby;
 
   // Render the screen surface (Guacamole if configured, else legacy iframe fallback)
   // ONCE per tile. CSS-only fullscreen so the connection isn't torn down on expand.
@@ -68,7 +69,7 @@ export function VmTile({ vm, lineState, pcrName, onStateChange, onLabelChange }:
           ? "border-destructive shadow-[0_0_15px_rgba(220,38,38,0.3)]"
           : isStandby
             ? "border-yellow-500/50"
-            : "border-border"
+            : "border-border/60 opacity-80 hover:opacity-100"
       }`}
     >
       {/* Header */}
@@ -78,18 +79,18 @@ export function VmTile({ vm, lineState, pcrName, onStateChange, onLabelChange }:
             ? "bg-destructive/10 border-destructive/20 text-destructive-foreground"
             : isStandby
               ? "bg-yellow-500/10 border-yellow-500/20"
-              : "bg-muted/30 border-border"
+              : "bg-muted/15 border-border/60 text-muted-foreground"
         }`}
       >
         <div className="flex items-center gap-3 min-w-0">
-          <div className="font-mono font-bold truncate">{vm.name}</div>
+          <div className={`font-mono font-bold truncate ${isIdle ? "text-foreground/80" : ""}`}>{vm.name}</div>
           {pcrName && (
-            <span className="text-[10px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded-sm bg-primary/15 text-primary border border-primary/30 shrink-0">
+            <span className="font-mono text-[10px] tracking-wider uppercase px-1.5 py-0.5 rounded-sm border border-border/60 text-muted-foreground/80 shrink-0">
               {pcrName}
             </span>
           )}
           {vm.phoneNumber && (
-            <div className="flex items-center gap-1 text-xs opacity-70">
+            <div className="flex items-center gap-1 text-xs opacity-60">
               <Phone className="w-3 h-3" />
               <span>{vm.phoneNumber}</span>
             </div>
@@ -115,7 +116,7 @@ export function VmTile({ vm, lineState, pcrName, onStateChange, onLabelChange }:
               ? "bg-destructive text-destructive-foreground animate-pulse shadow-[0_0_10px_rgba(220,38,38,0.5)]"
               : isStandby
                 ? "bg-yellow-500 text-black"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                : "bg-transparent text-muted-foreground/70 border border-border/60 hover:text-foreground hover:border-border"
           }`}
         >
           {lineState.state}
