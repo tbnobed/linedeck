@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   useListVms,
   useCreateVm,
@@ -16,7 +16,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Edit2, GripVertical, Tv2, ExternalLink } from "lucide-react";
+import { Plus, Trash2, Edit2, GripVertical, Tv2, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -34,12 +34,66 @@ import {
 
 type Tab = "systems" | "rooms";
 
+const PAGE_SIZE = 10;
+
+function Pagination({
+  page,
+  pageCount,
+  total,
+  pageSize,
+  onPageChange,
+}: {
+  page: number;
+  pageCount: number;
+  total: number;
+  pageSize: number;
+  onPageChange: (p: number) => void;
+}) {
+  if (pageCount <= 1) return null;
+  const first = (page - 1) * pageSize + 1;
+  const last = Math.min(page * pageSize, total);
+  return (
+    <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground">
+      <span>
+        Showing <span className="text-foreground font-medium">{first}–{last}</span> of{" "}
+        <span className="text-foreground font-medium">{total}</span>
+      </span>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8"
+          onClick={() => onPageChange(page - 1)}
+          disabled={page <= 1}
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Prev
+        </Button>
+        <span className="px-2 text-xs">
+          Page <span className="text-foreground font-medium">{page}</span> of{" "}
+          <span className="text-foreground font-medium">{pageCount}</span>
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8"
+          onClick={() => onPageChange(page + 1)}
+          disabled={page >= pageCount}
+        >
+          Next
+          <ChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function ConfigPage() {
   const [tab, setTab] = useState<Tab>("systems");
 
   return (
-    <div className="flex flex-col h-full bg-background p-6">
-      <div className="max-w-4xl mx-auto w-full">
+    <div className="flex flex-col h-full bg-background p-6 overflow-y-auto">
+      <div className="max-w-4xl mx-auto w-full pb-12">
         {/* Page header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -88,6 +142,17 @@ function SystemsTab() {
 
   const [isEditing, setIsEditing] = useState<number | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [page, setPage] = useState(1);
+
+  const sortedVms = useMemo(
+    () => (vms ?? []).slice().sort((a, b) => a.position - b.position),
+    [vms],
+  );
+  const pageCount = Math.max(1, Math.ceil(sortedVms.length / PAGE_SIZE));
+  useEffect(() => {
+    if (page > pageCount) setPage(pageCount);
+  }, [page, pageCount]);
+  const pagedVms = sortedVms.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const blankForm = {
     name: "",
@@ -171,13 +236,13 @@ function SystemsTab() {
       </div>
 
       <div className="border border-border rounded-lg bg-card overflow-hidden">
-        {vms?.length === 0 ? (
+        {sortedVms.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">
             No systems configured yet. Add your first system to begin.
           </div>
         ) : (
           <div className="divide-y divide-border">
-            {vms?.sort((a, b) => a.position - b.position).map((vm) => {
+            {pagedVms.map((vm) => {
               const assignedPcr = pcrs?.find((p) => p.id === vm.pcrId);
               return (
                 <div key={vm.id} className="flex items-center p-4 hover:bg-muted/50 transition-colors">
@@ -229,6 +294,14 @@ function SystemsTab() {
           </div>
         )}
       </div>
+
+      <Pagination
+        page={page}
+        pageCount={pageCount}
+        total={sortedVms.length}
+        pageSize={PAGE_SIZE}
+        onPageChange={setPage}
+      />
 
       <Dialog
         open={isAdding || isEditing !== null}
@@ -336,6 +409,14 @@ function RoomsTab() {
   const [isEditing, setIsEditing] = useState<number | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [pcrName, setPcrName] = useState("");
+  const [page, setPage] = useState(1);
+
+  const sortedPcrs = pcrs ?? [];
+  const pcrPageCount = Math.max(1, Math.ceil(sortedPcrs.length / PAGE_SIZE));
+  useEffect(() => {
+    if (page > pcrPageCount) setPage(pcrPageCount);
+  }, [page, pcrPageCount]);
+  const pagedPcrs = sortedPcrs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // Assign dialog state
   const [assigningPcr, setAssigningPcr] = useState<{ id: number; name: string } | null>(null);
@@ -445,7 +526,7 @@ function RoomsTab() {
           </div>
         ) : (
           <div className="divide-y divide-border">
-            {pcrs?.map((pcr) => {
+            {pagedPcrs.map((pcr) => {
               const assigned = (vms ?? []).filter((v) => v.pcrId === pcr.id);
               return (
                 <div key={pcr.id} className="flex items-center p-4 hover:bg-muted/50 transition-colors">
@@ -496,6 +577,14 @@ function RoomsTab() {
           </div>
         )}
       </div>
+
+      <Pagination
+        page={page}
+        pageCount={pcrPageCount}
+        total={sortedPcrs.length}
+        pageSize={PAGE_SIZE}
+        onPageChange={setPage}
+      />
 
       {/* Assign Systems dialog */}
       <Dialog open={assigningPcr !== null} onOpenChange={(o) => { if (!o) setAssigningPcr(null); }}>
