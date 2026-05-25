@@ -63,7 +63,7 @@ export function VmTile({
         <GuacClient
           connectionId={vm.guacConnectionId}
           dataSource={vm.guacDataSource || "mysql"}
-          interactive={!!fill || isFullscreen}
+          interactive
         />
       ) : vm.url ? (
         <iframe
@@ -76,9 +76,6 @@ export function VmTile({
         <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs">
           No source configured
         </div>
-      )}
-      {!fill && !isFullscreen && vm.guacConnectionId == null && (
-        <div className="absolute inset-0 z-10" />
       )}
     </div>
   );
