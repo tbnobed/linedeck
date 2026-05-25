@@ -49,14 +49,52 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
           displayEl.style.margin = "0 auto";
         }
 
+        // Fit the (potentially much larger) remote display into our tile.
+        const fit = () => {
+          if (!containerRef.current) return;
+          const dw = display.getWidth();
+          const dh = display.getHeight();
+          if (!dw || !dh) return;
+          const cw = containerRef.current.clientWidth;
+          const ch = containerRef.current.clientHeight;
+          const scale = Math.min(cw / dw, ch / dh);
+          if (scale > 0 && isFinite(scale)) display.scale(scale);
+        };
+        display.onresize = fit;
+        const ro = new ResizeObserver(fit);
+        if (containerRef.current) ro.observe(containerRef.current);
+        // expose for cleanup
+        (client as unknown as { __ro?: ResizeObserver }).__ro = ro;
+
         client.onstatechange = (state) => {
-          // 0=IDLE 1=CONNECTING 2=WAITING 3=CONNECTED 4=DISCONNECTING 5=DISCONNECTED
-          if (state === 3) setPhase("connected");
-          else if (state === 5) setPhase("disconnected");
+          const names = ["idle", "connecting", "waiting", "connected", "disconnecting", "disconnected"];
+          // eslint-disable-next-line no-console
+          console.log(`[GuacClient #${connectionId}] state →`, names[state] ?? state);
+          if (state === 3) {
+            setPhase("connected");
+            fit();
+          } else if (state === 5) setPhase("disconnected");
         };
         client.onerror = (status) => {
+          // eslint-disable-next-line no-console
+          console.error(`[GuacClient #${connectionId}] client error`, status);
           setPhase("error");
-          setMessage(status?.message ?? "Guacamole connection error");
+          setMessage(
+            `client: ${status?.message ?? "unknown"} (code ${(status as { code?: number })?.code ?? "?"})`,
+          );
+        };
+        tunnel.onerror = (status) => {
+          // eslint-disable-next-line no-console
+          console.error(`[GuacClient #${connectionId}] tunnel error`, status);
+          setPhase("error");
+          setMessage(
+            `tunnel: ${status?.message ?? "unknown"} (code ${(status as { code?: number })?.code ?? "?"})`,
+          );
+        };
+        tunnel.onstatechange = (state) => {
+          const names = ["connecting", "open", "closed", "unstable"];
+          // eslint-disable-next-line no-console
+          console.log(`[GuacClient #${connectionId}] tunnel →`, names[state] ?? state);
         };
 
         // Build connect string the way Apache Guacamole's own frontend does.
@@ -93,6 +131,12 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
 
     return () => {
       cancelled = true;
+      try {
+        const ro = (client as unknown as { __ro?: ResizeObserver })?.__ro;
+        ro?.disconnect();
+      } catch {
+        // best-effort
+      }
       try {
         if (client) client.disconnect();
       } catch {
