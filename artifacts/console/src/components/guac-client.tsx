@@ -207,11 +207,26 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
     mouse.on("mouseup", fwd);
     mouse.on("mousemove", fwd);
 
+    // Gate keyboard forwarding to "only the tile the mouse is over". Each
+    // tile creates its own Guacamole.Keyboard(document), so without a gate
+    // every keystroke would be sent to EVERY VM at once — and Guacamole's
+    // keyboard handler calls preventDefault on captured keys, which would
+    // also swallow browser shortcuts like F12 / Cmd-Opt-I (devtools),
+    // Ctrl-T, etc., across the whole page.
+    let hovered = false;
+    const onEnter = () => { hovered = true; };
+    const onLeave = () => { hovered = false; };
+    displayEl.addEventListener("mouseenter", onEnter);
+    displayEl.addEventListener("mouseleave", onLeave);
+
     const keyboard = new Guacamole.Keyboard(document);
     keyboard.onkeydown = (sym) => {
+      if (!hovered) return true; // let the browser handle it
       client.sendKeyEvent(1, sym);
+      return false; // tell Guacamole to preventDefault
     };
     keyboard.onkeyup = (sym) => {
+      if (!hovered) return;
       client.sendKeyEvent(0, sym);
     };
 
@@ -328,6 +343,8 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
     return () => {
       try {
         mouse.offEach(["mousedown", "mouseup", "mousemove"], () => true);
+        displayEl.removeEventListener("mouseenter", onEnter);
+        displayEl.removeEventListener("mouseleave", onLeave);
         keyboard.onkeydown = null;
         keyboard.onkeyup = null;
         client.onclipboard = null;
