@@ -169,7 +169,6 @@ export function GridPage() {
             lineState={getLineState(focusedVm.id) as any}
             pcrName={focusedVm.pcrId != null ? (pcrs?.find((p) => p.id === focusedVm.pcrId)?.name ?? null) : null}
             fill
-            onPrimaryAction={closeFocused}
             onStateChange={() => handleStateChange(focusedVm.id, getLineState(focusedVm.id).state)}
             onLabelChange={(label) => handleLabelChange(focusedVm.id, label)}
           />
@@ -217,10 +216,6 @@ export function GridPage() {
                     vm={vm}
                     lineState={lineState as any}
                     pcrName={pcrName}
-                    onPrimaryAction={() => {
-                      const base = pcrFilter !== null ? `/?pcr=${pcrFilter}&vm=${vm.id}` : `/?vm=${vm.id}`;
-                      navigate(base);
-                    }}
                     onStateChange={() => handleStateChange(vm.id, lineState.state)}
                     onLabelChange={(label) => handleLabelChange(vm.id, label)}
                   />
