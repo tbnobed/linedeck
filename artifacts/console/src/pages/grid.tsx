@@ -107,7 +107,7 @@ export function GridPage() {
     <div className="flex flex-col h-full ld-grid-backdrop">
       {/* Top Bar */}
       <header className="h-14 px-4 border-b border-border bg-card flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 min-w-0">
           {focusedVm ? (
             <>
               <Button
@@ -124,20 +124,21 @@ export function GridPage() {
           ) : (
             <>
               {currentPcr && (
-                <span className="text-sm font-semibold text-foreground mr-2">{currentPcr.name}</span>
+                <span className="text-sm font-semibold text-foreground mr-1 truncate">{currentPcr.name}</span>
               )}
 
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleResetAll}
-                className="h-8 gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                title="Reset all lines"
+                className="h-8 px-2 gap-1.5 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
               >
                 <AlertTriangle className="w-4 h-4" />
-                Reset All Lines
+                <span className="hidden xl:inline">Reset All</span>
               </Button>
 
-              <div className="flex items-center gap-1 border border-border rounded-md p-0.5 bg-background">
+              <div className="flex items-center gap-0.5 border border-border rounded-md p-0.5 bg-background">
                 {(
                   [
                     { key: "all", label: "All", count: pcrFilteredVms.length, activeCls: "bg-primary text-primary-foreground" },
@@ -149,7 +150,7 @@ export function GridPage() {
                   <button
                     key={f.key}
                     onClick={() => setStateFilter(f.key)}
-                    className={`h-7 px-2 text-xs rounded-sm font-medium transition-colors flex items-center gap-1.5 ${
+                    className={`h-7 px-1.5 text-xs rounded-sm font-medium transition-colors flex items-center gap-1 ${
                       stateFilter === f.key
                         ? f.activeCls
                         : "text-muted-foreground hover:text-foreground"
@@ -157,17 +158,17 @@ export function GridPage() {
                     title={`Show ${f.label.toLowerCase()} systems`}
                   >
                     <span>{f.label}</span>
-                    <span className="text-[10px] opacity-70">{f.count}</span>
+                    <span className="text-[10px] opacity-70 tabular-nums">{f.count}</span>
                   </button>
                 ))}
               </div>
 
-              <div className="flex items-center gap-1 border border-border rounded-md p-0.5 bg-background">
+              <div className="flex items-center gap-0.5 border border-border rounded-md p-0.5 bg-background">
                 {[2, 3, 4, 5].map((c) => (
                   <button
                     key={c}
                     onClick={() => setColumns(c)}
-                    className={`w-8 h-7 text-xs rounded-sm font-medium transition-colors ${
+                    className={`w-7 h-7 text-xs rounded-sm font-medium transition-colors ${
                       columns === c
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground"
