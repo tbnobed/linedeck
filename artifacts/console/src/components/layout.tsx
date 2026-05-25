@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Monitor, Settings, LayoutGrid, Tv2, Plus, HelpCircle } from "lucide-react";
+import { Monitor, Settings, LayoutGrid, Tv2, Plus, HelpCircle, ExternalLink } from "lucide-react";
 import { useListVms, useListPcrs } from "@workspace/api-client-react";
 import { Logo } from "@/components/logo";
 
@@ -43,21 +43,31 @@ export function Layout({ children }: { children: ReactNode }) {
                 Rooms
               </div>
               {pcrs.map((pcr) => (
-                <Link
-                  key={pcr.id}
-                  href={`/?pcr=${pcr.id}`}
-                  className={`flex items-center gap-2 px-2 py-2 rounded-md transition-colors text-sm ${
-                    location === `/?pcr=${pcr.id}`
-                      ? "bg-secondary text-secondary-foreground font-medium"
-                      : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-                  }`}
-                >
-                  <Tv2 className="w-4 h-4" />
-                  <span className="truncate">{pcr.name}</span>
-                  <span className="ml-auto text-xs text-muted-foreground/60">
-                    {vms?.filter((v) => v.pcrId === pcr.id).length ?? 0}
-                  </span>
-                </Link>
+                <div key={pcr.id} className="flex items-center group">
+                  <Link
+                    href={`/?pcr=${pcr.id}`}
+                    className={`flex-1 min-w-0 flex items-center gap-2 px-2 py-2 rounded-md transition-colors text-sm ${
+                      location === `/?pcr=${pcr.id}`
+                        ? "bg-secondary text-secondary-foreground font-medium"
+                        : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                    }`}
+                  >
+                    <Tv2 className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{pcr.name}</span>
+                    <span className="ml-auto text-xs text-muted-foreground/60">
+                      {vms?.filter((v) => v.pcrId === pcr.id).length ?? 0}
+                    </span>
+                  </Link>
+                  <a
+                    href={`${import.meta.env.BASE_URL}room/${pcr.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    title={`Launch ${pcr.name} in a new tab`}
+                    className="ml-1 p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity shrink-0"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
               ))}
             </>
           )}
