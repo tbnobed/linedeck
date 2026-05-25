@@ -14,6 +14,9 @@ export function GridPage() {
   const pcrFilter = params.get("pcr") ? Number(params.get("pcr")) : null;
   const expandedVmId = params.get("vm") ? Number(params.get("vm")) : null;
 
+  type StateFilter = "all" | "idle" | "standby" | "onair";
+  const [stateFilter, setStateFilter] = useState<StateFilter>("all");
+
   const { data: vms, isLoading: loadingVms } = useListVms();
   const { data: pcrs } = useListPcrs();
   const { data: initialLines } = useGetLines();
@@ -68,9 +71,21 @@ export function GridPage() {
   };
 
   const sortedVms = vms?.slice().sort((a, b) => a.position - b.position) ?? [];
-  const filteredVms = pcrFilter !== null
+  const pcrFilteredVms = pcrFilter !== null
     ? sortedVms.filter((v) => v.pcrId === pcrFilter)
     : sortedVms;
+  const filteredVms = stateFilter === "all"
+    ? pcrFilteredVms
+    : pcrFilteredVms.filter((v) => getLineState(v.id).state === stateFilter);
+
+  const stateCounts = pcrFilteredVms.reduce(
+    (acc, v) => {
+      const s = getLineState(v.id).state as "idle" | "standby" | "onair";
+      acc[s] = (acc[s] ?? 0) + 1;
+      return acc;
+    },
+    { idle: 0, standby: 0, onair: 0 } as Record<"idle" | "standby" | "onair", number>,
+  );
 
   const currentPcr = pcrFilter !== null ? pcrs?.find((p) => p.id === pcrFilter) : null;
   const focusedVm = expandedVmId !== null ? sortedVms.find((v) => v.id === expandedVmId) ?? null : null;
@@ -121,6 +136,31 @@ export function GridPage() {
                 <AlertTriangle className="w-4 h-4" />
                 Reset All Lines
               </Button>
+
+              <div className="flex items-center gap-1 border border-border rounded-md p-0.5 bg-background">
+                {(
+                  [
+                    { key: "all", label: "All", count: pcrFilteredVms.length, activeCls: "bg-primary text-primary-foreground" },
+                    { key: "idle", label: "Idle", count: stateCounts.idle, activeCls: "bg-muted-foreground/30 text-foreground" },
+                    { key: "standby", label: "Standby", count: stateCounts.standby, activeCls: "bg-yellow-500 text-black" },
+                    { key: "onair", label: "On Air", count: stateCounts.onair, activeCls: "bg-destructive text-destructive-foreground" },
+                  ] as const
+                ).map((f) => (
+                  <button
+                    key={f.key}
+                    onClick={() => setStateFilter(f.key)}
+                    className={`h-7 px-2 text-xs rounded-sm font-medium transition-colors flex items-center gap-1.5 ${
+                      stateFilter === f.key
+                        ? f.activeCls
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    title={`Show ${f.label.toLowerCase()} systems`}
+                  >
+                    <span>{f.label}</span>
+                    <span className="text-[10px] opacity-70">{f.count}</span>
+                  </button>
+                ))}
+              </div>
 
               <div className="flex items-center gap-1 border border-border rounded-md p-0.5 bg-background">
                 {[2, 3, 4, 5].map((c) => (
