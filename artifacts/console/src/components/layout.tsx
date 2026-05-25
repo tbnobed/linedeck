@@ -16,7 +16,7 @@ export function Layout({ children }: { children: ReactNode }) {
       {/* Sidebar */}
       <aside className="w-64 border-r border-border flex flex-col bg-card shrink-0">
         <div className="h-14 flex items-center px-4 border-b border-border shrink-0">
-          <Logo size={22} />
+          <Logo size={33} />
         </div>
 
         <div className="flex-1 overflow-y-auto py-4 flex flex-col gap-1 px-2">
