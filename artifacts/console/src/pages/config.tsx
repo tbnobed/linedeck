@@ -10,6 +10,7 @@ import {
   useDeletePcr,
   getListVmsQueryKey,
   getListPcrsQueryKey,
+  updateVm as updateVmApi,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -292,7 +293,6 @@ function RoomsTab() {
   const createPcr = useCreatePcr();
   const updatePcr = useUpdatePcr();
   const deletePcr = useDeletePcr();
-  const updateVm = useUpdateVm();
   const queryClient = useQueryClient();
 
   const [isEditing, setIsEditing] = useState<number | null>(null);
@@ -331,7 +331,7 @@ function RoomsTab() {
       const willBeAssigned = selectedVmIds.has(vm.id);
       if (wasAssigned === willBeAssigned) continue;
       updates.push(
-        updateVm.mutateAsync({ id: vm.id, data: { pcrId: willBeAssigned ? assigningPcr.id : null } })
+        updateVmApi(vm.id, { pcrId: willBeAssigned ? assigningPcr.id : null })
       );
     }
 
