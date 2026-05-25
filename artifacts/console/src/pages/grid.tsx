@@ -4,7 +4,7 @@ import { useListVms, useGetLines, useUpdateLine, useResetLines, useListPcrs } fr
 import { useSSE } from "@/hooks/use-sse";
 import { VmTile } from "@/components/vm-tile";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, MonitorPlay } from "lucide-react";
+import { AlertTriangle, MonitorPlay, X } from "lucide-react";
 
 export function GridPage() {
   const [columns, setColumns] = useState(3);
@@ -73,6 +73,7 @@ export function GridPage() {
     : sortedVms;
 
   const currentPcr = pcrFilter !== null ? pcrs?.find((p) => p.id === pcrFilter) : null;
+  const focusedVm = expandedVmId !== null ? sortedVms.find((v) => v.id === expandedVmId) ?? null : null;
 
   if (loadingVms) {
     return (
@@ -82,40 +83,62 @@ export function GridPage() {
     );
   }
 
+  const closeFocused = () => {
+    const base = pcrFilter !== null ? `/?pcr=${pcrFilter}` : "/";
+    navigate(base);
+  };
+
   return (
     <div className="flex flex-col h-full ld-grid-backdrop">
       {/* Top Bar */}
       <header className="h-14 px-4 border-b border-border bg-card flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4">
-          {currentPcr && (
-            <span className="text-sm font-semibold text-foreground mr-2">{currentPcr.name}</span>
-          )}
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleResetAll}
-            className="h-8 gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
-          >
-            <AlertTriangle className="w-4 h-4" />
-            Reset All Lines
-          </Button>
-
-          <div className="flex items-center gap-1 border border-border rounded-md p-0.5 bg-background">
-            {[2, 3, 4, 5].map((c) => (
-              <button
-                key={c}
-                onClick={() => setColumns(c)}
-                className={`w-8 h-7 text-xs rounded-sm font-medium transition-colors ${
-                  columns === c
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+          {focusedVm ? (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={closeFocused}
+                className="h-8 gap-2"
               >
-                {c}
-              </button>
-            ))}
-          </div>
+                <X className="w-4 h-4" />
+                Close
+              </Button>
+              <span className="text-sm font-semibold text-foreground">{focusedVm.name}</span>
+            </>
+          ) : (
+            <>
+              {currentPcr && (
+                <span className="text-sm font-semibold text-foreground mr-2">{currentPcr.name}</span>
+              )}
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResetAll}
+                className="h-8 gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+              >
+                <AlertTriangle className="w-4 h-4" />
+                Reset All Lines
+              </Button>
+
+              <div className="flex items-center gap-1 border border-border rounded-md p-0.5 bg-background">
+                {[2, 3, 4, 5].map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setColumns(c)}
+                    className={`w-8 h-7 text-xs rounded-sm font-medium transition-colors ${
+                      columns === c
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-6">
@@ -138,7 +161,23 @@ export function GridPage() {
         </div>
       </header>
 
-      {/* Grid */}
+      {/* Focused VM view: render the single selected VM filling the main area. */}
+      {focusedVm ? (
+        <div className="flex-1 p-4 min-h-0">
+          <VmTile
+            vm={focusedVm}
+            lineState={getLineState(focusedVm.id) as any}
+            pcrName={focusedVm.pcrId != null ? (pcrs?.find((p) => p.id === focusedVm.pcrId)?.name ?? null) : null}
+            fill
+            onPrimaryAction={closeFocused}
+            primaryActionIcon={<X className="w-4 h-4" />}
+            primaryActionTitle="Close"
+            onStateChange={() => handleStateChange(focusedVm.id, getLineState(focusedVm.id).state)}
+            onLabelChange={(label) => handleLabelChange(focusedVm.id, label)}
+          />
+        </div>
+      ) : (
+      /* Grid */
       <div className="flex-1 overflow-y-auto p-4">
         {filteredVms.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
@@ -170,7 +209,6 @@ export function GridPage() {
                 pcrFilter === null && vm.pcrId != null
                   ? (pcrs?.find((p) => p.id === vm.pcrId)?.name ?? null)
                   : null;
-              const isUrlExpanded = expandedVmId === vm.id;
               return (
                 <div
                   key={vm.id}
@@ -181,17 +219,6 @@ export function GridPage() {
                     vm={vm}
                     lineState={lineState as any}
                     pcrName={pcrName}
-                    expanded={isUrlExpanded ? true : undefined}
-                    onExpandedChange={
-                      isUrlExpanded
-                        ? (next) => {
-                            if (!next) {
-                              const base = pcrFilter !== null ? `/?pcr=${pcrFilter}` : "/";
-                              navigate(base);
-                            }
-                          }
-                        : undefined
-                    }
                     onStateChange={() => handleStateChange(vm.id, lineState.state)}
                     onLabelChange={(label) => handleLabelChange(vm.id, label)}
                   />
@@ -201,6 +228,7 @@ export function GridPage() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

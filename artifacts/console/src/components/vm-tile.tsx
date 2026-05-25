@@ -7,8 +7,13 @@ interface VmTileProps {
   vm: Vm;
   lineState: Line;
   pcrName?: string | null;
-  expanded?: boolean;
-  onExpandedChange?: (next: boolean) => void;
+  /** When true, fills the parent (no fixed height, no expand-overlay). Used by the focused-VM view. */
+  fill?: boolean;
+  /** Replaces the maximize button. When provided, this callback is called when the user clicks the chrome's primary action. */
+  onPrimaryAction?: () => void;
+  /** Custom icon for the primary action button. */
+  primaryActionIcon?: React.ReactNode;
+  primaryActionTitle?: string;
   onStateChange: () => void;
   onLabelChange: (label: string) => void;
 }
@@ -17,18 +22,14 @@ export function VmTile({
   vm,
   lineState,
   pcrName,
-  expanded,
-  onExpandedChange,
+  fill,
+  onPrimaryAction,
+  primaryActionIcon,
+  primaryActionTitle,
   onStateChange,
   onLabelChange,
 }: VmTileProps) {
-  const [internalExpanded, setInternalExpanded] = useState(false);
-  const isControlled = expanded !== undefined;
-  const isExpanded = isControlled ? !!expanded : internalExpanded;
-  const setIsExpanded = (next: boolean) => {
-    if (!isControlled) setInternalExpanded(next);
-    onExpandedChange?.(next);
-  };
+  const [isExpanded, setIsExpanded] = useState(false);
   const [localLabel, setLocalLabel] = useState(lineState.label);
   const labelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -113,11 +114,11 @@ export function VmTile({
           )}
         </div>
         <button
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={onPrimaryAction ?? (() => setIsExpanded(!isExpanded))}
           className="p-1 hover:bg-background/20 rounded opacity-50 hover:opacity-100 transition-opacity"
-          title={isExpanded ? "Collapse" : "Expand"}
+          title={primaryActionTitle ?? (isExpanded ? "Collapse" : "Expand")}
         >
-          {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          {primaryActionIcon ?? (isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />)}
         </button>
       </div>
 
@@ -153,7 +154,12 @@ export function VmTile({
     </div>
   );
 
-  // Single mount point — wrapper className toggles between grid-slot and fullscreen-overlay.
+  // Two modes: standard 300px grid-slot tile, or `fill` mode (used by the
+  // focused-VM view) where the tile fills its parent container.
+  if (fill) {
+    return <div className="h-full w-full">{TileChrome}</div>;
+  }
+
   return (
     <div className="h-[300px] relative">
       {isExpanded && (
