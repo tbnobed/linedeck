@@ -14,6 +14,7 @@ type Phase = "connecting" | "connected" | "error" | "disconnected";
 export function GuacClient({ connectionId, dataSource, interactive = false }: GuacClientProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const clientRef = useRef<Guacamole.Client | null>(null);
+  const displayElRef = useRef<HTMLElement | null>(null);
   const [phase, setPhase] = useState<Phase>("connecting");
   const [message, setMessage] = useState<string>("");
 
@@ -47,6 +48,7 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
 
         const display = client.getDisplay();
         displayEl = display.getElement();
+        displayElRef.current = displayEl;
         if (containerRef.current) {
           containerRef.current.innerHTML = "";
           containerRef.current.appendChild(displayEl);
@@ -156,11 +158,18 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
   // with `interactive` without touching the tunnel.
   useEffect(() => {
     if (!interactive) return;
-    const container = containerRef.current;
     const client = clientRef.current;
-    if (!container || !client) return;
+    const displayEl = displayElRef.current;
+    if (!client || !displayEl) return;
 
-    const mouse = new Guacamole.Mouse(container);
+    // Attach Mouse to the DISPLAY element, not the surrounding container.
+    // The display is centered inside the container with letterbox bars when
+    // its scaled size doesn't match the tile (larger tiles at 2-3 columns).
+    // Listening on the container would report coordinates relative to the
+    // container origin (top-left of the letterbox), which the Guacamole
+    // client then forwards to the remote as off-target positions — the
+    // remote cursor appears "off-screen" and never renders inside the tile.
+    const mouse = new Guacamole.Mouse(displayEl);
     const fwd = () => {
       client.sendMouseState(mouse.currentState, true);
     };
