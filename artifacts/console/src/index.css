@@ -159,10 +159,14 @@
   animation: ld-onair-pulse 1.7s ease-in-out infinite;
 }
 
-/* Staggered first-paint reveal for grid tiles. */
+/* Staggered first-paint reveal for grid tiles. The final keyframe MUST land on
+   `transform: none` — any non-`none` transform on the wrapper creates a
+   containing block that would trap `position: fixed` children (the expand
+   overlay) inside the tile. */
 @keyframes ld-tile-enter {
   0%   { opacity: 0; transform: translateY(8px) scale(0.985); }
-  100% { opacity: 1; transform: translateY(0)   scale(1);     }
+  99%  { opacity: 1; transform: translateY(0.01px) scale(1);  }
+  100% { opacity: 1; transform: none;                          }
 }
 .ld-tile-enter {
   opacity: 0;

@@ -7,12 +7,28 @@ interface VmTileProps {
   vm: Vm;
   lineState: Line;
   pcrName?: string | null;
+  expanded?: boolean;
+  onExpandedChange?: (next: boolean) => void;
   onStateChange: () => void;
   onLabelChange: (label: string) => void;
 }
 
-export function VmTile({ vm, lineState, pcrName, onStateChange, onLabelChange }: VmTileProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+export function VmTile({
+  vm,
+  lineState,
+  pcrName,
+  expanded,
+  onExpandedChange,
+  onStateChange,
+  onLabelChange,
+}: VmTileProps) {
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  const isControlled = expanded !== undefined;
+  const isExpanded = isControlled ? !!expanded : internalExpanded;
+  const setIsExpanded = (next: boolean) => {
+    if (!isControlled) setInternalExpanded(next);
+    onExpandedChange?.(next);
+  };
   const [localLabel, setLocalLabel] = useState(lineState.label);
   const labelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -97,7 +113,7 @@ export function VmTile({ vm, lineState, pcrName, onStateChange, onLabelChange }:
           )}
         </div>
         <button
-          onClick={() => setIsExpanded((v) => !v)}
+          onClick={() => setIsExpanded(!isExpanded)}
           className="p-1 hover:bg-background/20 rounded opacity-50 hover:opacity-100 transition-opacity"
           title={isExpanded ? "Collapse" : "Expand"}
         >

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearch } from "wouter";
+import { useSearch, useLocation } from "wouter";
 import { useListVms, useGetLines, useUpdateLine, useResetLines, useListPcrs } from "@workspace/api-client-react";
 import { useSSE } from "@/hooks/use-sse";
 import { VmTile } from "@/components/vm-tile";
@@ -9,8 +9,10 @@ import { AlertTriangle, MonitorPlay } from "lucide-react";
 export function GridPage() {
   const [columns, setColumns] = useState(3);
   const search = useSearch();
+  const [, navigate] = useLocation();
   const params = new URLSearchParams(search);
   const pcrFilter = params.get("pcr") ? Number(params.get("pcr")) : null;
+  const expandedVmId = params.get("vm") ? Number(params.get("vm")) : null;
 
   const { data: vms, isLoading: loadingVms } = useListVms();
   const { data: pcrs } = useListPcrs();
@@ -168,6 +170,7 @@ export function GridPage() {
                 pcrFilter === null && vm.pcrId != null
                   ? (pcrs?.find((p) => p.id === vm.pcrId)?.name ?? null)
                   : null;
+              const isUrlExpanded = expandedVmId === vm.id;
               return (
                 <div
                   key={vm.id}
@@ -178,6 +181,17 @@ export function GridPage() {
                     vm={vm}
                     lineState={lineState as any}
                     pcrName={pcrName}
+                    expanded={isUrlExpanded ? true : undefined}
+                    onExpandedChange={
+                      isUrlExpanded
+                        ? (next) => {
+                            if (!next) {
+                              const base = pcrFilter !== null ? `/?pcr=${pcrFilter}` : "/";
+                              navigate(base);
+                            }
+                          }
+                        : undefined
+                    }
                     onStateChange={() => handleStateChange(vm.id, lineState.state)}
                     onLabelChange={(label) => handleLabelChange(vm.id, label)}
                   />
