@@ -152,7 +152,7 @@ export function GridPage() {
               <>
                 <h2 className="text-xl font-medium text-foreground mb-2">No Virtual Machines Configured</h2>
                 <p className="max-w-md text-center mb-6">
-                  Go to Configuration to add Dante VMs to the console.
+                  Go to Configuration to add VMs to LineDeck.
                 </p>
               </>
             )}

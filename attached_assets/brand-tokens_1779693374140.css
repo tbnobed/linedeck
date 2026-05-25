@@ -1,0 +1,72 @@
+/* =============================================================
+   LineDeck — design tokens
+   Drop into the React app (import once at the root). Refined
+   dark broadcast palette: deep navy field, blue signal accent,
+   and the three line-state semantics (idle / standby / on air)
+   that the logo itself is built around.
+   ============================================================= */
+:root {
+  /* ---- surfaces (deep navy field, layered) ---- */
+  --ld-bg:            #0B0E13;   /* app background */
+  --ld-bg-grad:       radial-gradient(1200px 600px at 80% -10%, #141C28 0%, #0B0E13 55%);
+  --ld-surface:       #11161F;   /* cards, sidebar */
+  --ld-surface-2:     #0E131B;   /* tile body, insets */
+  --ld-surface-3:     #161D28;   /* hover / raised */
+  --ld-line:          #212B3A;   /* primary borders */
+  --ld-line-soft:     #1A2330;   /* hairlines */
+
+  /* ---- text ---- */
+  --ld-text:          #E7EEF7;
+  --ld-text-dim:      #8593A6;
+  --ld-text-faint:    #5B6779;
+
+  /* ---- brand / signal accent (blue) ---- */
+  --ld-accent:        #3FA9FF;
+  --ld-accent-bright: #6FC0FF;
+  --ld-accent-deep:   #1769B8;
+  --ld-accent-soft:   rgba(63, 169, 255, 0.14);
+  --ld-accent-line:   rgba(63, 169, 255, 0.50);
+  --ld-accent-glow:   rgba(63, 169, 255, 0.35);
+
+  /* ---- line-state semantics ---- */
+  --ld-idle:          #5B6779;   /* neutral */
+  --ld-standby:       #F5A623;   /* amber */
+  --ld-standby-text:  #F5C06B;
+  --ld-standby-soft:  rgba(245, 166, 35, 0.14);
+  --ld-standby-line:  rgba(245, 166, 35, 0.55);
+  --ld-onair:         #FF4D4D;   /* red */
+  --ld-onair-deep:    #E23636;
+  --ld-onair-soft:    rgba(255, 77, 77, 0.12);
+  --ld-onair-line:    rgba(255, 77, 77, 0.60);
+  --ld-onair-glow:    rgba(255, 77, 77, 0.28);
+
+  /* ---- status / utility ---- */
+  --ld-ok:            #56D364;   /* synced / healthy */
+  --ld-ok-soft:       rgba(86, 211, 100, 0.10);
+  --ld-warn:          #F5A623;
+  --ld-danger:        #FF4D4D;
+
+  /* ---- typography ---- */
+  --ld-font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ld-font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --ld-fs-xs: 11px;  --ld-fs-sm: 12px;  --ld-fs-md: 14px;
+  --ld-fs-lg: 16px;  --ld-fs-xl: 20px;  --ld-fs-2xl: 28px;
+  --ld-tracking-mono: 0.5px;   /* labels, clocks, IDs use mono + tracking */
+
+  /* ---- radius / elevation / motion ---- */
+  --ld-radius-sm: 6px;  --ld-radius: 10px;  --ld-radius-lg: 14px;  --ld-radius-pill: 999px;
+  --ld-shadow-1: 0 1px 2px rgba(0,0,0,.3);
+  --ld-shadow-2: 0 8px 24px rgba(0,0,0,.35);
+  --ld-shadow-3: 0 30px 90px rgba(0,0,0,.6);
+  --ld-ease: cubic-bezier(.2,.8,.25,1);
+  --ld-dur: .18s;
+
+  /* ---- spacing scale ---- */
+  --ld-1: 4px; --ld-2: 8px; --ld-3: 12px; --ld-4: 16px; --ld-5: 24px; --ld-6: 32px; --ld-7: 48px;
+}
+
+/* On-air keyframe the logo node + console pill share */
+@keyframes ld-onair-pulse {
+  0%, 100% { box-shadow: 0 0 10px var(--ld-onair-glow); }
+  50%      { box-shadow: 0 0 20px rgba(255,77,77,.85); }
+}

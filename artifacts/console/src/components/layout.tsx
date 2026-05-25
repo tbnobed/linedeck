@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { Monitor, Settings, LayoutGrid, Tv2, Plus } from "lucide-react";
 import { useListVms, useListPcrs } from "@workspace/api-client-react";
+import { Logo } from "@/components/logo";
 
 export function Layout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
@@ -15,10 +16,7 @@ export function Layout({ children }: { children: ReactNode }) {
       {/* Sidebar */}
       <aside className="w-64 border-r border-border flex flex-col bg-card shrink-0">
         <div className="h-14 flex items-center px-4 border-b border-border shrink-0">
-          <div className="flex items-center gap-2 font-bold tracking-tight text-primary uppercase">
-            <Monitor className="w-5 h-5 text-destructive" />
-            <span>ViP Dante Console</span>
-          </div>
+          <Logo size={22} />
         </div>
 
         <div className="flex-1 overflow-y-auto py-4 flex flex-col gap-1 px-2">

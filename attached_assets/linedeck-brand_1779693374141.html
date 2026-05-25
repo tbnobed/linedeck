@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LineDeck — Brand Sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0E13; --surface:#11161F; --surface2:#0E131B; --surface3:#161D28;
+    --line:#212B3A; --line-soft:#1A2330;
+    --text:#E7EEF7; --dim:#8593A6; --faint:#5B6779;
+    --accent:#3FA9FF; --accent-bright:#6FC0FF; --accent-deep:#1769B8;
+    --accent-soft:rgba(63,169,255,.14); --accent-line:rgba(63,169,255,.5);
+    --standby:#F5A623; --standby-text:#F5C06B; --standby-soft:rgba(245,166,35,.14); --standby-line:rgba(245,166,35,.55);
+    --onair:#FF4D4D; --onair-deep:#E23636; --onair-soft:rgba(255,77,77,.12); --onair-line:rgba(255,77,77,.6); --onair-glow:rgba(255,77,77,.28);
+    --ok:#56D364;
+    --sans:'IBM Plex Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);color:var(--text);
+    background:radial-gradient(1200px 600px at 85% -10%,#141C28 0%,#0B0E13 55%),var(--bg);
+    -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1040px;margin:0 auto;padding:56px 32px 80px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--faint);}
+  h1{font-size:34px;font-weight:700;letter-spacing:-.8px;margin:6px 0 0}
+  h2{font-size:13px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);
+     font-weight:600;margin:0 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line-soft);}
+  .lede{color:var(--dim);font-size:15px;line-height:1.6;max-width:620px;margin:16px 0 0}
+  section{margin-top:56px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:28px;}
+
+  /* ---- live-node mark (CSS-driven, with pulse) ---- */
+  .mark{position:relative;width:var(--s,64px);height:var(--s,64px);flex:none;display:grid;place-items:center}
+  .mark .ring{position:absolute;border-radius:50%;border:3px solid var(--accent);}
+  .mark .r1{width:100%;height:100%;opacity:.42}
+  .mark .r2{width:58%;height:58%;opacity:.8}
+  .mark .node{width:24%;height:24%;border-radius:50%;
+    background:linear-gradient(135deg,var(--accent-bright),var(--accent-deep));
+    box-shadow:0 0 16px var(--accent);}
+  .mark.air .ring{border-color:var(--onair)}
+  .mark.air .node{background:linear-gradient(135deg,#FF7A7A,var(--onair-deep));box-shadow:0 0 16px var(--onair);
+    animation:pulse 1.7s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 12px var(--onair-glow)}50%{box-shadow:0 0 22px rgba(255,77,77,.9)}}
+
+  /* ---- logo lockups ---- */
+  .lockup{display:flex;align-items:center;gap:18px}
+  .word{font-size:38px;font-weight:700;letter-spacing:-1.2px;line-height:1}
+  .word b{font-weight:700}
+  .word .deck{font-weight:500;color:var(--accent-bright)}
+  .logo-row{display:flex;gap:20px;flex-wrap:wrap}
+  .logo-tile{flex:1;min-width:240px;display:flex;flex-direction:column;align-items:center;gap:16px;
+    padding:34px 24px;border-radius:14px;border:1px solid var(--line);background:var(--surface2)}
+  .logo-tile.light{background:#EAF1FA;border-color:#cdd9e8}
+  .logo-tile.light .word{color:#0E131B}
+  .logo-tile.light .word .deck{color:var(--accent-deep)}
+  .logo-tile .cap{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--faint)}
+  .logo-tile.light .cap{color:#5a6b80}
+
+  /* app icons */
+  .icons{display:flex;gap:18px;flex-wrap:wrap}
+  .appicon{width:96px;height:96px;border-radius:22px;display:grid;place-items:center;position:relative;
+    background:linear-gradient(135deg,#141C28,#0B0E13);border:1px solid var(--line)}
+  .appicon.air{background:linear-gradient(135deg,#1C1416,#0B0E13);border-color:#47272B}
+
+  /* ---- palette ---- */
+  .swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .sw{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface2)}
+  .sw .chip{height:62px}
+  .sw .meta{padding:9px 11px}
+  .sw .nm{font-size:12px;font-weight:600}
+  .sw .hex{font-family:var(--mono);font-size:10.5px;color:var(--dim);letter-spacing:.4px}
+
+  /* ---- type ---- */
+  .type-row{display:flex;align-items:baseline;gap:16px;padding:14px 0;border-bottom:1px solid var(--line-soft)}
+  .type-row .tag{font-family:var(--mono);font-size:10px;color:var(--faint);width:120px;flex:none;letter-spacing:.5px}
+
+  /* ---- state pills ---- */
+  .pills{display:flex;gap:12px;flex-wrap:wrap}
+  .pill{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:600;
+    letter-spacing:.6px;text-transform:uppercase;padding:6px 12px;border-radius:999px;border:1px solid var(--line);color:var(--faint)}
+  .pill .d{width:8px;height:8px;border-radius:50%;background:currentColor}
+  .pill.stby{color:var(--standby-text);border-color:var(--standby-line);background:var(--standby-soft)}
+  .pill.air{color:#fff;border-color:var(--onair);background:var(--onair-deep)}
+
+  /* ---- branded console header mockup ---- */
+  .mock{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface2)}
+  .mock .bar{display:flex;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,var(--surface),var(--surface2))}
+  .mock .bar .ttl{font-size:14px;font-weight:600}
+  .mock .bar .ttl .em{color:var(--dim);font-weight:400}
+  .mock .bar .sp{flex:1}
+  .mock .chip2{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;font-weight:600;
+    letter-spacing:.6px;padding:5px 9px;border-radius:7px;border:1px solid rgba(86,211,100,.4);color:var(--ok);background:rgba(86,211,100,.1)}
+  .mock .chip2::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+  .mock .clock{font-family:var(--mono);font-size:13px;color:var(--dim)}
+  .mock .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px}
+  .tile{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface3)}
+  .tile .th{display:flex;align-items:center;gap:9px;padding:9px 11px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,var(--surface),var(--surface2))}
+  .tile .nm{font-size:12.5px;font-weight:600}
+  .tile .ph{font-family:var(--mono);font-size:11px;color:var(--dim)}
+  .tile .body{height:84px;background:repeating-linear-gradient(45deg,#0a0d12,#0a0d12 10px,#0c1016 10px,#0c1016 20px)}
+  .tile.stby{border-color:var(--standby-line);box-shadow:0 0 0 1px var(--standby-line)}
+  .tile.air{border-color:var(--onair);box-shadow:0 0 0 1px var(--onair-line),0 0 24px var(--onair-glow)}
+  .tile.air .th{background:linear-gradient(180deg,rgba(226,54,54,.18),transparent)}
+  .minipill{margin-left:auto;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.5px;padding:3px 7px;border-radius:999px}
+  .minipill.i{color:var(--faint);border:1px solid var(--line)}
+  .minipill.s{color:var(--standby-text);border:1px solid var(--standby-line);background:var(--standby-soft)}
+  .minipill.a{color:#fff;background:var(--onair-deep)}
+
+  .note{font-size:13px;color:var(--dim);line-height:1.6;margin-top:14px}
+  .foot{margin-top:64px;padding-top:20px;border-top:1px solid var(--line-soft);font-family:var(--mono);font-size:11px;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">OBTV · The Plex · Broadcast Operations</div>
+    <h1>LineDeck</h1>
+    <p class="lede">The control surface for ViP guest lines. The mark is a live signal node — the same on-air
+    indicator operators watch all day — so the brand and the product are the same object. It carries two states:
+    idle in signal-blue, and ON&nbsp;AIR in red.</p>
+  </header>
+
+  <!-- LOGO -->
+  <section>
+    <h2>Logo</h2>
+    <div class="logo-row">
+      <div class="logo-tile">
+        <div class="lockup">
+          <div class="mark" style="--s:60px"><span class="ring r1"></span><span class="ring r2"></span><span class="node"></span></div>
+          <div class="word"><b>Line</b><span class="deck">Deck</span></div>
+        </div>
+        <span class="cap">Primary · dark</span>
+      </div>
+      <div class="logo-tile light">
+        <div class="lockup">
+          <div class="mark" style="--s:60px"><span class="ring r1"></span><span class="ring r2"></span><span class="node"></span></div>
+          <div class="word"><b>Line</b><span class="deck">Deck</span></div>
+        </div>
+        <span class="cap">Primary · light</span>
+      </div>
+    </div>
+
+    <div style="margin-top:20px" class="card">
+      <div style="display:flex;gap:40px;align-items:center;flex-wrap:wrap">
+        <div class="icons">
+          <div class="appicon"><div class="mark" style="--s:58px"><span class="ring r1"></span><span class="ring r2"></span><span class="node"></span></div></div>
+          <div class="appicon air"><div class="mark air" style="--s:58px"><span class="ring r1"></span><span class="ring r2"></span><span class="node"></span></div></div>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:14px;margin-bottom:6px">App icon — idle &amp; on-air</div>
+          <div class="note" style="margin:0;max-width:420px">The icon can reflect live status: blue when all lines are clear,
+          red the moment any line goes on air. Same trick works for the browser favicon and a wall-mounted status tile.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PALETTE -->
+  <section>
+    <h2>Palette</h2>
+    <div class="swatches">
+      <div class="sw"><div class="chip" style="background:#0B0E13"></div><div class="meta"><div class="nm">Field</div><div class="hex">#0B0E13</div></div></div>
+      <div class="sw"><div class="chip" style="background:#11161F"></div><div class="meta"><div class="nm">Surface</div><div class="hex">#11161F</div></div></div>
+      <div class="sw"><div class="chip" style="background:#212B3A"></div><div class="meta"><div class="nm">Line</div><div class="hex">#212B3A</div></div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(135deg,#6FC0FF,#1769B8)"></div><div class="meta"><div class="nm">Signal (accent)</div><div class="hex">#3FA9FF</div></div></div>
+      <div class="sw"><div class="chip" style="background:#F5A623"></div><div class="meta"><div class="nm">Standby</div><div class="hex">#F5A623</div></div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(135deg,#FF7A7A,#E23636)"></div><div class="meta"><div class="nm">On Air</div><div class="hex">#FF4D4D</div></div></div>
+      <div class="sw"><div class="chip" style="background:#56D364"></div><div class="meta"><div class="nm">Synced</div><div class="hex">#56D364</div></div></div>
+      <div class="sw"><div class="chip" style="background:#E7EEF7"></div><div class="meta"><div class="nm">Text</div><div class="hex">#E7EEF7</div></div></div>
+    </div>
+  </section>
+
+  <!-- TYPE -->
+  <section>
+    <h2>Typography</h2>
+    <div class="card">
+      <div class="type-row"><span class="tag">Display / 700</span><span style="font-size:30px;font-weight:700;letter-spacing:-.8px">IBM Plex Sans</span></div>
+      <div class="type-row"><span class="tag">Body / 400–500</span><span style="font-size:16px;color:var(--dim)">Clean, legible, neutral-technical — the workhorse for labels and content.</span></div>
+      <div class="type-row" style="border:none"><span class="tag">Mono / 500</span><span style="font-family:var(--mono);font-size:15px;letter-spacing:.5px;color:var(--accent-bright)">IBM Plex Mono · (714) 665-2179 · 21:19:40</span></div>
+      <p class="note">Mono carries everything machine-ish — line IDs, phone numbers, the clock, status chips — which gives the console its
+      "operations desk" character without extra ornament.</p>
+    </div>
+  </section>
+
+  <!-- STATE LANGUAGE -->
+  <section>
+    <h2>Line-state language</h2>
+    <div class="card">
+      <div class="pills">
+        <span class="pill"><span class="d"></span>Idle</span>
+        <span class="pill stby"><span class="d"></span>Standby</span>
+        <span class="pill air"><span class="d"></span>On Air</span>
+      </div>
+      <p class="note">One semantic system everywhere: pill, tile border, the logo node, and the app icon all speak the same
+      three states. Idle is quiet neutral; standby is amber to stage a guest; on air is an unmistakable red with a slow glow.</p>
+    </div>
+  </section>
+
+  <!-- APPLIED -->
+  <section>
+    <h2>Applied — console header</h2>
+    <div class="mock">
+      <div class="bar">
+        <div class="mark" style="--s:26px"><span class="ring r1"></span><span class="ring r2"></span><span class="node"></span></div>
+        <div class="word" style="font-size:18px"><b>Line</b><span class="deck">Deck</span></div>
+        <div class="ttl" style="margin-left:10px"></div>
+        <div class="sp"></div>
+        <span class="chip2">SYNCED</span>
+        <span class="clock">21:19:40</span>
+      </div>
+      <div class="grid">
+        <div class="tile air"><div class="th"><span class="nm">ViP 104</span><span class="ph">665-2128</span><span class="minipill a">ON AIR</span></div><div class="body"></div></div>
+        <div class="tile stby"><div class="th"><span class="nm">ViP 105</span><span class="ph">665-2190</span><span class="minipill s">STDBY</span></div><div class="body"></div></div>
+        <div class="tile"><div class="th"><span class="nm">ViP 106</span><span class="ph">665-2100</span><span class="minipill i">IDLE</span></div><div class="body"></div></div>
+      </div>
+    </div>
+    <p class="note">The wordmark sits left in the top bar; the live node doubles as a system heartbeat. At a glance an operator
+    reads the room: one line hot, one staged, one clear.</p>
+  </section>
+
+  <div class="foot">
+    <span>LineDeck — brand sheet</span>
+    <span>OBTV · The Plex</span>
+  </div>
+</div>
+</body>
+</html>

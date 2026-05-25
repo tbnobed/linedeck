@@ -1,38 +1,39 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-card-border: hsl(var(--card-border));
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-card-border: var(--card-border);
 
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-popover-border: hsl(var(--popover-border));
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover-border: var(--popover-border);
 
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
 
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
 
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
 
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
 
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
 
   --font-sans: var(--app-font-sans);
   --font-mono: var(--app-font-mono);
@@ -44,46 +45,116 @@
 }
 
 :root {
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
+  /* ============================================================
+     LineDeck — design tokens
+     Deep navy field, signal-blue accent, three line-state semantics
+     (idle / standby / on-air) shared by mark, pill, and tile chrome.
+     ============================================================ */
 
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --card-border: 240 3.7% 15.9%;
+  /* surfaces */
+  --ld-bg:            #0B0E13;
+  --ld-bg-grad:       radial-gradient(1200px 600px at 80% -10%, #141C28 0%, #0B0E13 55%);
+  --ld-surface:       #11161F;
+  --ld-surface-2:     #0E131B;
+  --ld-surface-3:     #161D28;
+  --ld-line:          #212B3A;
+  --ld-line-soft:     #1A2330;
 
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  --popover-border: 240 3.7% 15.9%;
+  /* text */
+  --ld-text:          #E7EEF7;
+  --ld-text-dim:      #8593A6;
+  --ld-text-faint:    #5B6779;
 
-  --primary: 0 0% 98%;
-  --primary-foreground: 240 5.9% 10%;
+  /* signal accent */
+  --ld-accent:        #3FA9FF;
+  --ld-accent-bright: #6FC0FF;
+  --ld-accent-deep:   #1769B8;
+  --ld-accent-soft:   rgba(63, 169, 255, 0.14);
+  --ld-accent-line:   rgba(63, 169, 255, 0.50);
+  --ld-accent-glow:   rgba(63, 169, 255, 0.35);
 
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
+  /* line-state */
+  --ld-idle:          #5B6779;
+  --ld-standby:       #F5A623;
+  --ld-standby-text:  #F5C06B;
+  --ld-standby-soft:  rgba(245, 166, 35, 0.14);
+  --ld-standby-line:  rgba(245, 166, 35, 0.55);
+  --ld-onair:         #FF4D4D;
+  --ld-onair-deep:    #E23636;
+  --ld-onair-soft:    rgba(255, 77, 77, 0.12);
+  --ld-onair-line:    rgba(255, 77, 77, 0.60);
+  --ld-onair-glow:    rgba(255, 77, 77, 0.28);
 
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
+  /* utility */
+  --ld-ok:            #56D364;
+  --ld-warn:          #F5A623;
+  --ld-danger:        #FF4D4D;
 
-  --accent: 240 3.7% 15.9%;
-  --accent-foreground: 0 0% 98%;
+  /* =========================================================
+     shadcn theme variables → mapped onto LineDeck tokens.
+     All existing `bg-background`, `text-primary`, `border-destructive`,
+     `text-destructive`, etc. classes inherit the new look.
+     ========================================================= */
+  --background:            var(--ld-bg);
+  --foreground:            var(--ld-text);
 
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
+  --card:                  var(--ld-surface);
+  --card-foreground:       var(--ld-text);
+  --card-border:           var(--ld-line);
 
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 240 4.9% 83.9%;
+  --popover:               var(--ld-surface);
+  --popover-foreground:    var(--ld-text);
+  --popover-border:        var(--ld-line);
 
-  --app-font-sans: 'Inter', sans-serif;
-  --app-font-mono: 'JetBrains Mono', monospace;
-  --radius: 0.5rem;
+  --primary:               var(--ld-accent);
+  --primary-foreground:    #06121F;
+
+  --secondary:             var(--ld-surface-3);
+  --secondary-foreground:  var(--ld-text);
+
+  --muted:                 var(--ld-surface-2);
+  --muted-foreground:      var(--ld-text-dim);
+
+  --accent:                var(--ld-accent-soft);
+  --accent-foreground:     var(--ld-accent-bright);
+
+  --destructive:           var(--ld-onair);
+  --destructive-foreground:#FFFFFF;
+
+  --border:                var(--ld-line);
+  --input:                 var(--ld-line);
+  --ring:                  var(--ld-accent);
+
+  --app-font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --app-font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --radius: 0.625rem;
 }
 
 @layer base {
   * {
     @apply border-border;
   }
-  body {
-    @apply font-sans antialiased bg-background text-foreground;
+  html, body {
+    background: var(--ld-bg-grad), var(--ld-bg);
   }
+  body {
+    @apply font-sans antialiased text-foreground;
+  }
+}
+
+/* Shared on-air pulse used by the live-node mark and tile chrome */
+@keyframes ld-onair-pulse {
+  0%, 100% { filter: drop-shadow(0 0 4px var(--ld-onair-glow)); }
+  50%      { filter: drop-shadow(0 0 10px rgba(255, 77, 77, 0.9)); }
+}
+
+@keyframes ld-onair-box-pulse {
+  0%, 100% { box-shadow: 0 0 10px var(--ld-onair-glow); }
+  50%      { box-shadow: 0 0 20px rgba(255, 77, 77, 0.85); }
+}
+
+.ld-pulse-node {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ld-onair-pulse 1.7s ease-in-out infinite;
 }

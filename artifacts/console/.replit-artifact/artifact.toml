@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "ViP Dante VM Console"
+title = "LineDeck"
 version = "1.0.0"
 id = "artifacts/console"
 router = "path"

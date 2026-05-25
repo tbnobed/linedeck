@@ -4,7 +4,8 @@ import { useListVms, useGetLines, useUpdateLine, useResetLines, useListPcrs } fr
 import { useSSE } from "@/hooks/use-sse";
 import { VmTile } from "@/components/vm-tile";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, MonitorPlay, Monitor } from "lucide-react";
+import { AlertTriangle, MonitorPlay } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 export function RoomPage() {
   const [, params] = useRoute("/room/:id");
@@ -95,9 +96,12 @@ export function RoomPage() {
       {/* Top Bar */}
       <header className="h-14 px-4 border-b border-border bg-card flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 font-bold tracking-tight text-primary uppercase">
-            <Monitor className="w-5 h-5 text-destructive" />
-            <span>{pcr.name}</span>
+          <Logo size={20} withWordmark={false} />
+          <div className="flex items-baseline gap-2 leading-none">
+            <span className="font-semibold tracking-tight text-foreground">{pcr.name}</span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              LineDeck Room
+            </span>
           </div>
 
           <Button
