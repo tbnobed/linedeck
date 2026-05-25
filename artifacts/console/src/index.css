@@ -169,11 +169,17 @@
   animation: ld-tile-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Subtle grid backdrop: deep navy radial wash + faint vignette so the empty
-   right-hand slots feel intentional instead of looking like dead black space. */
+/* Grid backdrop: deep navy field with a visible blue corona, a warm low-corner
+   ember, and a faint 32px engineering grid so empty slots read as intentional
+   negative space instead of dead black. */
 .ld-grid-backdrop {
-  background:
-    radial-gradient(900px 500px at 85% -10%, rgba(63, 169, 255, 0.06) 0%, transparent 60%),
-    radial-gradient(700px 400px at 0% 100%, rgba(255, 77, 77, 0.04) 0%, transparent 65%),
-    linear-gradient(180deg, #0B0E13 0%, #0A0D11 100%);
+  background-color: #0B0E13;
+  background-image:
+    radial-gradient(1100px 700px at 90% -10%, rgba(63, 169, 255, 0.22) 0%, rgba(63, 169, 255, 0.06) 35%, transparent 65%),
+    radial-gradient(900px 600px at 0% 110%, rgba(255, 77, 77, 0.14) 0%, rgba(255, 77, 77, 0.03) 40%, transparent 70%),
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(180deg, #0E141C 0%, #08090C 100%);
+  background-size: auto, auto, 32px 32px, 32px 32px, auto;
+  background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
 }
