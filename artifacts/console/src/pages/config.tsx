@@ -143,11 +143,34 @@ function SystemsTab() {
   const [isEditing, setIsEditing] = useState<number | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [page, setPage] = useState(1);
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
 
   const sortedVms = useMemo(
     () => (vms ?? []).slice().sort((a, b) => a.position - b.position),
     [vms],
   );
+
+  const handleReorder = async (sourceId: number, targetId: number) => {
+    if (sourceId === targetId) return;
+    const order = sortedVms.slice();
+    const fromIdx = order.findIndex((v) => v.id === sourceId);
+    const toIdx = order.findIndex((v) => v.id === targetId);
+    if (fromIdx < 0 || toIdx < 0) return;
+    const [moved] = order.splice(fromIdx, 1);
+    order.splice(toIdx, 0, moved);
+
+    const updates: Promise<unknown>[] = [];
+    order.forEach((vm, i) => {
+      const newPos = i + 1;
+      if (vm.position !== newPos) {
+        updates.push(updateVmApi(vm.id, { position: newPos }));
+      }
+    });
+    if (updates.length === 0) return;
+    await Promise.all(updates);
+    queryClient.invalidateQueries({ queryKey: getListVmsQueryKey() });
+  };
   const pageCount = Math.max(1, Math.ceil(sortedVms.length / PAGE_SIZE));
   useEffect(() => {
     if (page > pageCount) setPage(pageCount);
@@ -244,9 +267,39 @@ function SystemsTab() {
           <div className="divide-y divide-border">
             {pagedVms.map((vm) => {
               const assignedPcr = pcrs?.find((p) => p.id === vm.pcrId);
+              const isDragging = draggedId === vm.id;
+              const isDragOver = dragOverId === vm.id && draggedId !== vm.id;
               return (
-                <div key={vm.id} className="flex items-center p-4 hover:bg-muted/50 transition-colors">
-                  <div className="mr-4 text-muted-foreground/50">
+                <div
+                  key={vm.id}
+                  draggable
+                  onDragStart={(e) => {
+                    setDraggedId(vm.id);
+                    e.dataTransfer.effectAllowed = "move";
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                    if (dragOverId !== vm.id) setDragOverId(vm.id);
+                  }}
+                  onDragLeave={() => {
+                    if (dragOverId === vm.id) setDragOverId(null);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (draggedId !== null) handleReorder(draggedId, vm.id);
+                    setDraggedId(null);
+                    setDragOverId(null);
+                  }}
+                  onDragEnd={() => {
+                    setDraggedId(null);
+                    setDragOverId(null);
+                  }}
+                  className={`flex items-center p-4 hover:bg-muted/50 transition-colors ${
+                    isDragging ? "opacity-40" : ""
+                  } ${isDragOver ? "border-t-2 border-primary" : ""}`}
+                >
+                  <div className="mr-4 text-muted-foreground/50 cursor-grab active:cursor-grabbing">
                     <GripVertical className="w-5 h-5" />
                   </div>
                   <div className="flex-1 grid grid-cols-12 gap-4 items-center">
