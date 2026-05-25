@@ -17,11 +17,11 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
   const [phase, setPhase] = useState<Phase>("connecting");
   const [message, setMessage] = useState<string>("");
 
+  // ── Connection lifecycle: depends ONLY on connection identity.
+  // Toggling `interactive` (expand/collapse) must NOT tear down the tunnel.
   useEffect(() => {
     let cancelled = false;
     let client: Guacamole.Client | null = null;
-    let mouse: Guacamole.Mouse | null = null;
-    let keyboard: Guacamole.Keyboard | null = null;
     let displayEl: HTMLElement | null = null;
 
     (async () => {
@@ -40,7 +40,6 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
         client = new Guacamole.Client(tunnel);
         clientRef.current = client;
 
-        // Render the Guacamole display into our container.
         const display = client.getDisplay();
         displayEl = display.getElement();
         if (containerRef.current) {
@@ -64,31 +63,13 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
           token: authToken,
           GUAC_DATA_SOURCE: effectiveDs,
           GUAC_ID: String(connectionId),
-          GUAC_TYPE: "c", // connection (not group)
+          GUAC_TYPE: "c",
           GUAC_WIDTH: String(Math.max(640, containerRef.current?.clientWidth ?? 1024)),
           GUAC_HEIGHT: String(Math.max(360, containerRef.current?.clientHeight ?? 768)),
           GUAC_DPI: "96",
         });
 
         client.connect(params.toString());
-
-        if (interactive && containerRef.current) {
-          mouse = new Guacamole.Mouse(containerRef.current);
-          const fwd = () => {
-            if (client && mouse) client.sendMouseState(mouse.currentState, true);
-          };
-          mouse.on("mousedown", fwd);
-          mouse.on("mouseup", fwd);
-          mouse.on("mousemove", fwd);
-
-          keyboard = new Guacamole.Keyboard(document);
-          keyboard.onkeydown = (sym) => {
-            if (client) client.sendKeyEvent(1, sym);
-          };
-          keyboard.onkeyup = (sym) => {
-            if (client) client.sendKeyEvent(0, sym);
-          };
-        }
       } catch (err) {
         if (cancelled) return;
         setPhase("error");
@@ -99,32 +80,55 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
     return () => {
       cancelled = true;
       try {
-        if (mouse) {
-          mouse.offEach(["mousedown", "mouseup", "mousemove"], () => true);
-        }
-        if (keyboard) {
-          keyboard.onkeydown = null;
-          keyboard.onkeyup = null;
-        }
-        if (client) {
-          client.disconnect();
-        }
+        if (client) client.disconnect();
       } catch {
-        // swallow — best-effort cleanup
+        // best-effort
       }
       clientRef.current = null;
       if (displayEl && displayEl.parentNode) {
         displayEl.parentNode.removeChild(displayEl);
       }
     };
-  }, [connectionId, dataSource, interactive]);
+  }, [connectionId, dataSource]);
+
+  // ── Input binding: layered on top of the live client. Toggles cleanly
+  // with `interactive` without touching the tunnel.
+  useEffect(() => {
+    if (!interactive) return;
+    const container = containerRef.current;
+    const client = clientRef.current;
+    if (!container || !client) return;
+
+    const mouse = new Guacamole.Mouse(container);
+    const fwd = () => {
+      client.sendMouseState(mouse.currentState, true);
+    };
+    mouse.on("mousedown", fwd);
+    mouse.on("mouseup", fwd);
+    mouse.on("mousemove", fwd);
+
+    const keyboard = new Guacamole.Keyboard(document);
+    keyboard.onkeydown = (sym) => {
+      client.sendKeyEvent(1, sym);
+    };
+    keyboard.onkeyup = (sym) => {
+      client.sendKeyEvent(0, sym);
+    };
+
+    return () => {
+      try {
+        mouse.offEach(["mousedown", "mouseup", "mousemove"], () => true);
+        keyboard.onkeydown = null;
+        keyboard.onkeyup = null;
+      } catch {
+        // best-effort
+      }
+    };
+  }, [interactive, phase]);
 
   return (
     <div className="relative w-full h-full bg-black overflow-hidden">
-      <div
-        ref={containerRef}
-        className="w-full h-full flex items-center justify-center"
-      />
+      <div ref={containerRef} className="w-full h-full flex items-center justify-center" />
       {phase === "connecting" && (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground bg-black/60 pointer-events-none">
           <Loader2 className="w-6 h-6 animate-spin mb-2" />
