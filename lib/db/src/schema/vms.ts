@@ -6,10 +6,12 @@ import { pcrsTable } from "./pcrs";
 export const vmsTable = pgTable("vms", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  url: text("url").notNull(),
+  url: text("url").notNull().default(""),
   phoneNumber: text("phone_number").notNull().default(""),
   position: integer("position").notNull().default(0),
   pcrId: integer("pcr_id").references(() => pcrsTable.id, { onDelete: "set null" }),
+  guacConnectionId: integer("guac_connection_id"),
+  guacDataSource: text("guac_data_source").notNull().default("mysql"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

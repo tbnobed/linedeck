@@ -177,6 +177,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /guac/token:
+    post:
+      operationId: createGuacToken
+      tags: [vms]
+      summary: Broker an auth token from the Guacamole REST API
+      responses:
+        "200":
+          description: Guacamole auth token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuacTokenResponse"
+        "503":
+          description: Guacamole server unavailable or not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /vms:
     get:
       operationId: listVms
@@ -333,7 +352,7 @@ components:
 
     Vm:
       type: object
-      required: [id, name, url, phoneNumber, position]
+      required: [id, name, url, phoneNumber, position, guacDataSource]
       properties:
         id:
           type: integer
@@ -347,23 +366,30 @@ components:
           type: integer
         pcrId:
           type: ["integer", "null"]
+        guacConnectionId:
+          type: ["integer", "null"]
+        guacDataSource:
+          type: string
 
     VmInput:
       type: object
-      required: [name, url, phoneNumber, position]
+      required: [name, phoneNumber, position]
       properties:
         name:
           type: string
           minLength: 1
         url:
           type: string
-          minLength: 1
         phoneNumber:
           type: string
         position:
           type: integer
         pcrId:
           type: ["integer", "null"]
+        guacConnectionId:
+          type: ["integer", "null"]
+        guacDataSource:
+          type: string
 
     VmPatch:
       type: object
@@ -373,13 +399,28 @@ components:
           minLength: 1
         url:
           type: string
-          minLength: 1
         phoneNumber:
           type: string
         position:
           type: integer
         pcrId:
           type: ["integer", "null"]
+        guacConnectionId:
+          type: ["integer", "null"]
+        guacDataSource:
+          type: string
+
+    GuacTokenResponse:
+      type: object
+      required: [authToken, dataSource, baseUrl]
+      properties:
+        authToken:
+          type: string
+        dataSource:
+          type: string
+        baseUrl:
+          type: string
+          description: Public base URL of the Guacamole server (e.g. http://10.63.12.105:8080/guacamole)
 
     ErrorResponse:
       type: object

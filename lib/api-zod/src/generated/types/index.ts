@@ -7,6 +7,7 @@
  */
 
 export * from './errorResponse';
+export * from './guacTokenResponse';
 export * from './healthStatus';
 export * from './line';
 export * from './lineInput';

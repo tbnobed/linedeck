@@ -14,4 +14,7 @@ export interface Vm {
   position: number;
   /** @nullable */
   pcrId?: number | null;
+  /** @nullable */
+  guacConnectionId?: number | null;
+  guacDataSource: string;
 }

@@ -110,6 +110,16 @@ export const DeletePcrParams = zod.object({
 
 
 /**
+ * @summary Broker an auth token from the Guacamole REST API
+ */
+export const CreateGuacTokenResponse = zod.object({
+  "authToken": zod.string(),
+  "dataSource": zod.string(),
+  "baseUrl": zod.string().describe('Public base URL of the Guacamole server (e.g. http:\/\/10.63.12.105:8080\/guacamole)')
+})
+
+
+/**
  * @summary List all configured VMs
  */
 export const ListVmsResponseItem = zod.object({
@@ -118,7 +128,9 @@ export const ListVmsResponseItem = zod.object({
   "url": zod.string(),
   "phoneNumber": zod.string(),
   "position": zod.number(),
-  "pcrId": zod.number().nullish()
+  "pcrId": zod.number().nullish(),
+  "guacConnectionId": zod.number().nullish(),
+  "guacDataSource": zod.string()
 })
 export const ListVmsResponse = zod.array(ListVmsResponseItem)
 
@@ -129,13 +141,14 @@ export const ListVmsResponse = zod.array(ListVmsResponseItem)
 
 
 
-
 export const CreateVmBody = zod.object({
   "name": zod.string().min(1),
-  "url": zod.string().min(1),
+  "url": zod.string().optional(),
   "phoneNumber": zod.string(),
   "position": zod.number(),
-  "pcrId": zod.number().nullish()
+  "pcrId": zod.number().nullish(),
+  "guacConnectionId": zod.number().nullish(),
+  "guacDataSource": zod.string().optional()
 })
 
 
@@ -149,13 +162,14 @@ export const UpdateVmParams = zod.object({
 
 
 
-
 export const UpdateVmBody = zod.object({
   "name": zod.string().min(1).optional(),
-  "url": zod.string().min(1).optional(),
+  "url": zod.string().optional(),
   "phoneNumber": zod.string().optional(),
   "position": zod.number().optional(),
-  "pcrId": zod.number().nullish()
+  "pcrId": zod.number().nullish(),
+  "guacConnectionId": zod.number().nullish(),
+  "guacDataSource": zod.string().optional()
 })
 
 export const UpdateVmResponse = zod.object({
@@ -164,7 +178,9 @@ export const UpdateVmResponse = zod.object({
   "url": zod.string(),
   "phoneNumber": zod.string(),
   "position": zod.number(),
-  "pcrId": zod.number().nullish()
+  "pcrId": zod.number().nullish(),
+  "guacConnectionId": zod.number().nullish(),
+  "guacDataSource": zod.string()
 })
 
 

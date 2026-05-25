@@ -9,10 +9,12 @@
 export interface VmPatch {
   /** @minLength 1 */
   name?: string;
-  /** @minLength 1 */
   url?: string;
   phoneNumber?: string;
   position?: number;
   /** @nullable */
   pcrId?: number | null;
+  /** @nullable */
+  guacConnectionId?: number | null;
+  guacDataSource?: string;
 }

@@ -67,28 +67,42 @@ export interface Vm {
   position: number;
   /** @nullable */
   pcrId?: number | null;
+  /** @nullable */
+  guacConnectionId?: number | null;
+  guacDataSource: string;
 }
 
 export interface VmInput {
   /** @minLength 1 */
   name: string;
-  /** @minLength 1 */
-  url: string;
+  url?: string;
   phoneNumber: string;
   position: number;
   /** @nullable */
   pcrId?: number | null;
+  /** @nullable */
+  guacConnectionId?: number | null;
+  guacDataSource?: string;
 }
 
 export interface VmPatch {
   /** @minLength 1 */
   name?: string;
-  /** @minLength 1 */
   url?: string;
   phoneNumber?: string;
   position?: number;
   /** @nullable */
   pcrId?: number | null;
+  /** @nullable */
+  guacConnectionId?: number | null;
+  guacDataSource?: string;
+}
+
+export interface GuacTokenResponse {
+  authToken: string;
+  dataSource: string;
+  /** Public base URL of the Guacamole server (e.g. http://10.63.12.105:8080/guacamole) */
+  baseUrl: string;
 }
 
 export interface ErrorResponse {

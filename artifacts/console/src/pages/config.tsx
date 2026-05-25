@@ -89,16 +89,26 @@ function SystemsTab() {
   const [isEditing, setIsEditing] = useState<number | null>(null);
   const [isAdding, setIsAdding] = useState(false);
 
-  const blankForm = { name: "", url: "", phoneNumber: "", position: 0, pcrId: null as number | null };
+  const blankForm = {
+    name: "",
+    url: "",
+    phoneNumber: "",
+    position: 0,
+    pcrId: null as number | null,
+    guacConnectionId: null as number | null,
+    guacDataSource: "mysql",
+  };
   const [formData, setFormData] = useState(blankForm);
 
   const handleEdit = (vm: any) => {
     setFormData({
       name: vm.name,
-      url: vm.url,
+      url: vm.url ?? "",
       phoneNumber: vm.phoneNumber || "",
       position: vm.position,
       pcrId: vm.pcrId ?? null,
+      guacConnectionId: vm.guacConnectionId ?? null,
+      guacDataSource: vm.guacDataSource || "mysql",
     });
     setIsEditing(vm.id);
   };
@@ -232,11 +242,28 @@ function SystemsTab() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Stream URL</Label>
+              <Label>Guacamole Connection ID</Label>
+              <Input
+                type="number"
+                value={formData.guacConnectionId ?? ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    guacConnectionId: e.target.value === "" ? null : Number(e.target.value),
+                  })
+                }
+                placeholder="e.g. 29"
+              />
+              <p className="text-xs text-muted-foreground">
+                Numeric connection id from your Guacamole server (data source: {formData.guacDataSource}).
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Fallback URL (optional)</Label>
               <Input
                 value={formData.url}
                 onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                placeholder="http://..."
+                placeholder="Only used when no Guacamole ID is set"
               />
             </div>
             <div className="space-y-2">

@@ -21,6 +21,7 @@ import type {
 
 import type {
   ErrorResponse,
+  GuacTokenResponse,
   HealthStatus,
   Line,
   LineInput,
@@ -629,6 +630,76 @@ export const useDeletePcr = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getDeletePcrMutationOptions(options));
+    }
+
+export const getCreateGuacTokenUrl = () => {
+
+
+
+
+  return `/api/guac/token`
+}
+
+/**
+ * @summary Broker an auth token from the Guacamole REST API
+ */
+export const createGuacToken = async ( options?: RequestInit): Promise<GuacTokenResponse> => {
+
+  return customFetch<GuacTokenResponse>(getCreateGuacTokenUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getCreateGuacTokenMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGuacToken>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createGuacToken>>, TError,void, TContext> => {
+
+const mutationKey = ['createGuacToken'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createGuacToken>>, void> = () => {
+
+
+          return  createGuacToken(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateGuacTokenMutationResult = NonNullable<Awaited<ReturnType<typeof createGuacToken>>>
+
+    export type CreateGuacTokenMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Broker an auth token from the Guacamole REST API
+ */
+export const useCreateGuacToken = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGuacToken>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createGuacToken>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getCreateGuacTokenMutationOptions(options));
     }
 
 export const getListVmsUrl = () => {
