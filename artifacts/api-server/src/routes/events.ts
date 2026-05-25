@@ -19,7 +19,7 @@ router.get("/events", async (req: Request, res: Response): Promise<void> => {
   res.write(`event: snapshot\ndata: ${JSON.stringify(snapshot)}\n\n`);
 
   const send = (event: object) => {
-    res.write(`data: ${JSON.stringify(event)}\n\n`);
+    res.write(`event: data\ndata: ${JSON.stringify(event)}\n\n`);
   };
 
   addSubscriber(send);
