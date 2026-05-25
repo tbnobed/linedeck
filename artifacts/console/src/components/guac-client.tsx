@@ -52,6 +52,12 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
           containerRef.current.appendChild(displayEl);
           displayEl.style.display = "block";
           displayEl.style.margin = "0 auto";
+          // Hide OS cursor ONLY when over the actual remote-display surface,
+          // so Guacamole's own cursor layer takes over. The surrounding
+          // letterbox bars keep the OS cursor visible, otherwise the cursor
+          // appears to "vanish" in the black margins on tiles whose aspect
+          // ratio doesn't match the remote desktop.
+          displayEl.style.cursor = "none";
         }
 
         // Fit the (potentially much larger) remote display into our tile.
@@ -300,7 +306,6 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
       <div
         ref={containerRef}
         className="w-full h-full flex items-center justify-center"
-        style={{ cursor: "none" }}
       />
       {phase === "connecting" && (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground bg-black/60 pointer-events-none">
