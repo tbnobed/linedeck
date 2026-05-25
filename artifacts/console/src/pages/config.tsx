@@ -16,7 +16,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Edit2, GripVertical, Tv2 } from "lucide-react";
+import { Plus, Trash2, Edit2, GripVertical, Tv2, ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -421,6 +421,17 @@ function RoomsTab() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    <a
+                      href={`${import.meta.env.BASE_URL}room/${pcr.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Open standalone room view in a new tab"
+                    >
+                      <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        Open
+                      </Button>
+                    </a>
                     <Button
                       variant="outline"
                       size="sm"

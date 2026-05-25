@@ -6,18 +6,27 @@ import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/layout";
 import { GridPage } from "@/pages/grid";
 import { ConfigPage } from "@/pages/config";
+import { RoomPage } from "@/pages/room";
 
 const queryClient = new QueryClient();
 
 function Router() {
   return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={GridPage} />
-        <Route path="/vms" component={ConfigPage} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+    <Switch>
+      {/* Standalone per-room view: no sidebar, no other PCRs visible */}
+      <Route path="/room/:id" component={RoomPage} />
+
+      {/* Everything else uses the main layout with sidebar */}
+      <Route>
+        <Layout>
+          <Switch>
+            <Route path="/" component={GridPage} />
+            <Route path="/vms" component={ConfigPage} />
+            <Route component={NotFound} />
+          </Switch>
+        </Layout>
+      </Route>
+    </Switch>
   );
 }
 
