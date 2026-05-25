@@ -42,7 +42,11 @@ COPY lib/api-zod/package.json ./lib/api-zod/
 COPY lib/api-client-react/package.json ./lib/api-client-react/
 COPY lib/db/package.json ./lib/db/
 COPY artifacts/api-server/package.json ./artifacts/api-server/
-RUN pnpm install --frozen-lockfile --prod
+# --ignore-scripts: the API is a fully-bundled esbuild output, so no runtime
+# install hooks are needed. Also bypasses the repo-root preinstall guard which
+# fails inside docker when pnpm doesn't propagate $npm_config_user_agent to
+# lifecycle scripts under --prod.
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
 COPY --from=builder /app/artifacts/api-server/dist ./artifacts/api-server/dist
 # Console build lands in ./public — picked up by Express static serving (STATIC_DIR default).
