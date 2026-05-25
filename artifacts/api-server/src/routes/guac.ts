@@ -44,10 +44,14 @@ router.post("/guac/token", async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
+    // Return a SAME-ORIGIN path, not the internal Guacamole URL. The browser
+    // will open the tunnel through our /api/guac-proxy reverse proxy so the
+    // WebSocket uses wss:// matching the page's origin (no mixed-content
+    // block) and the internal Guacamole IP stays private to the LAN.
     res.json({
       authToken: json.authToken,
       dataSource: json.dataSource ?? "mysql",
-      baseUrl,
+      baseUrl: "/api/guac-proxy",
     });
   } catch (err) {
     req.log.error({ err }, "Failed to reach Guacamole server");

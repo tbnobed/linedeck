@@ -3,10 +3,38 @@ import cors from "cors";
 import path from "node:path";
 import fs from "node:fs";
 import pinoHttp from "pino-http";
+import { createProxyMiddleware, type Options as ProxyOptions } from "http-proxy-middleware";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
+
+// ── Guacamole reverse proxy.
+// The browser must NOT talk to the internal Guacamole server directly — when
+// LineDeck is served over HTTPS, a plain ws:// tunnel to the LAN IP is a
+// mixed-content violation ("operation is insecure") and gets blocked. We
+// proxy /api/guac-proxy/* (incl. WebSocket upgrade for /websocket-tunnel) to
+// the configured GUACAMOLE_URL so the browser only ever talks same-origin.
+//
+// Mounted BEFORE express.json/urlencoded so request bodies aren't consumed,
+// and BEFORE the /api router so /api/guac-proxy doesn't fall into the
+// per-route 404 handler.
+const guacUpstream = process.env["GUACAMOLE_URL"]?.replace(/\/+$/, "");
+export const guacProxy = guacUpstream
+  ? createProxyMiddleware({
+      target: guacUpstream,
+      changeOrigin: true,
+      ws: true,
+      pathRewrite: { "^/api/guac-proxy": "" },
+      logger,
+    } satisfies ProxyOptions)
+  : null;
+if (guacProxy) {
+  app.use("/api/guac-proxy", guacProxy);
+  logger.info({ target: guacUpstream }, "Guacamole reverse proxy enabled at /api/guac-proxy");
+} else {
+  logger.warn("GUACAMOLE_URL not set — /api/guac-proxy disabled");
+}
 
 app.use(
   pinoHttp({

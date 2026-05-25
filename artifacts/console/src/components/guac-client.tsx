@@ -32,9 +32,16 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
         const { authToken, dataSource: ds, baseUrl } = tokenResp;
         const effectiveDs = ds || dataSource;
 
-        // Convert http(s):// → ws(s):// for the tunnel endpoint.
-        const wsBase = baseUrl.replace(/^http/i, "ws");
-        const tunnelUrl = `${wsBase}/websocket-tunnel`;
+        // Build a fully-qualified WebSocket URL for the tunnel.
+        //   - If baseUrl is absolute (http(s)://host/path), swap scheme to ws/wss.
+        //   - If baseUrl is same-origin (e.g. "/api/guac-proxy"), derive ws(s)
+        //     scheme from the current page so HTTPS pages get wss:// and avoid
+        //     mixed-content blocks.
+        const tunnelUrl = /^https?:/i.test(baseUrl)
+          ? `${baseUrl.replace(/^http/i, "ws")}/websocket-tunnel`
+          : `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}${baseUrl}/websocket-tunnel`;
+        // eslint-disable-next-line no-console
+        console.log(`[GuacClient #${connectionId}] tunnel URL`, tunnelUrl);
 
         const tunnel = new Guacamole.WebSocketTunnel(tunnelUrl);
         client = new Guacamole.Client(tunnel);
