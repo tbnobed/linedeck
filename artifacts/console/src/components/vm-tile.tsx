@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import type { Vm, Line } from "@workspace/api-client-react";
 import { Maximize2, Phone, User, X } from "lucide-react";
 import { GuacClient } from "./guac-client";
@@ -167,23 +168,27 @@ export function VmTile({
   if (fill) {
     return <div className="h-full w-full">{TileChrome}</div>;
   }
-  return (
-    <div className="h-[300px] relative">
-      {isFullscreen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/80"
-          onClick={() => setIsFullscreen(false)}
-        />
-      )}
-      <div
-        className={
-          isFullscreen
-            ? "fixed inset-[2vh] z-50 shadow-2xl"
-            : "absolute inset-0"
-        }
-      >
-        {TileChrome}
-      </div>
-    </div>
-  );
+  // Portal the fullscreen overlay to document.body so it lives in the root
+  // stacking context — otherwise sibling grid tiles (with their opacity-animated
+  // wrappers) form local stacking contexts that can render OVER the fixed
+  // backdrop. React portals preserve component identity, so GuacClient's
+  // WebSocket survives the toggle.
+  if (isFullscreen) {
+    return (
+      <>
+        <div className="h-[300px]" />
+        {createPortal(
+          <div className="fixed inset-0 z-[9999]">
+            <div
+              className="absolute inset-0 bg-black/85"
+              onClick={() => setIsFullscreen(false)}
+            />
+            <div className="absolute inset-[2vh] shadow-2xl">{TileChrome}</div>
+          </div>,
+          document.body,
+        )}
+      </>
+    );
+  }
+  return <div className="h-[300px]">{TileChrome}</div>;
 }
