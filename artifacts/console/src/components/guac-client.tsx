@@ -70,19 +70,26 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
           displayEl.style.cursor = "none";
         }
 
-        // Fit the (potentially much larger) remote display into our tile.
-        // `display.scale()` already updates the bounds element's CSS width/
-        // height to the scaled size, which Guacamole.Mouse reads via
-        // offsetWidth/offsetHeight, so no extra sizing is required here.
+        // Fit the (potentially much larger) remote display into our tile,
+        // then center the displayEl inside the container using explicit
+        // pixel left/top values. Setting position via concrete numbers (not
+        // flex or CSS transform) keeps `offsetLeft` / `offsetTop` accurate,
+        // which Guacamole.Mouse relies on for translating viewport mouse
+        // coordinates into element-relative ones.
         const fit = () => {
-          if (!containerRef.current) return;
+          const c = containerRef.current;
+          if (!c || !displayEl) return;
           const dw = display.getWidth();
           const dh = display.getHeight();
           if (!dw || !dh) return;
-          const cw = containerRef.current.clientWidth;
-          const ch = containerRef.current.clientHeight;
+          const cw = c.clientWidth;
+          const ch = c.clientHeight;
           const scale = Math.min(cw / dw, ch / dh);
-          if (scale > 0 && isFinite(scale)) display.scale(scale);
+          if (scale > 0 && isFinite(scale)) {
+            display.scale(scale);
+            displayEl.style.left = `${Math.max(0, Math.round((cw - dw * scale) / 2))}px`;
+            displayEl.style.top = `${Math.max(0, Math.round((ch - dh * scale) / 2))}px`;
+          }
         };
         display.onresize = fit;
         const ro = new ResizeObserver(fit);
