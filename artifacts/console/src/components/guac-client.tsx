@@ -17,7 +17,6 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
   const displayElRef = useRef<HTMLElement | null>(null);
   const [phase, setPhase] = useState<Phase>("connecting");
   const [message, setMessage] = useState<string>("");
-  const [debug, setDebug] = useState<{ mx: number; my: number; rx: number; ry: number; scale: number; dw: number; dh: number } | null>(null);
 
   // ── Connection lifecycle: depends ONLY on connection identity.
   // Toggling `interactive` (expand/collapse) must NOT tear down the tunnel.
@@ -188,20 +187,8 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
     // client then forwards to the remote as off-target positions — the
     // remote cursor appears "off-screen" and never renders inside the tile.
     const mouse = new Guacamole.Mouse(displayEl);
-    const display = client.getDisplay();
     const fwd = () => {
       client.sendMouseState(mouse.currentState, true);
-      const s = display.getScale() || 1;
-      const st = mouse.currentState as unknown as { x: number; y: number };
-      setDebug({
-        mx: Math.round(st.x),
-        my: Math.round(st.y),
-        rx: Math.round(st.x / s),
-        ry: Math.round(st.y / s),
-        scale: Math.round(s * 1000) / 1000,
-        dw: display.getWidth(),
-        dh: display.getHeight(),
-      });
     };
     mouse.on("mousedown", fwd);
     mouse.on("mouseup", fwd);
@@ -367,12 +354,6 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
         <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground bg-black/60 pointer-events-none">
           <Loader2 className="w-6 h-6 animate-spin mb-2" />
           <div className="text-xs">Connecting to VM #{connectionId}…</div>
-        </div>
-      )}
-      {debug && (
-        <div className="absolute top-1 left-1 z-10 bg-black/80 text-[10px] font-mono text-green-400 px-1.5 py-0.5 rounded pointer-events-none leading-tight">
-          local {debug.mx},{debug.my} → remote {debug.rx},{debug.ry}<br />
-          scale {debug.scale} · desktop {debug.dw}×{debug.dh}
         </div>
       )}
       {(phase === "error" || phase === "disconnected") && (
