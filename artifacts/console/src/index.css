@@ -159,19 +159,6 @@
   animation: ld-onair-pulse 1.7s ease-in-out infinite;
 }
 
-/* Staggered first-paint reveal for grid tiles. Opacity-only — DO NOT animate
-   transform on this wrapper, because any non-`none` transform creates a
-   containing block that would trap the tile's `position: fixed` expand
-   overlay inside the tile instead of the viewport. */
-@keyframes ld-tile-enter {
-  0%   { opacity: 0; }
-  100% { opacity: 1; }
-}
-.ld-tile-enter {
-  opacity: 0;
-  animation: ld-tile-enter 480ms ease-out both;
-}
-
 /* Grid backdrop: deep navy field with a visible blue corona, a warm low-corner
    ember, and a faint 32px engineering grid so empty slots read as intentional
    negative space instead of dead black. */

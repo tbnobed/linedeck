@@ -200,18 +200,14 @@ export function GridPage() {
             className="grid gap-4 auto-rows-max"
             style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
           >
-            {filteredVms.map((vm, idx) => {
+            {filteredVms.map((vm) => {
               const lineState = getLineState(vm.id);
               const pcrName =
                 pcrFilter === null && vm.pcrId != null
                   ? (pcrs?.find((p) => p.id === vm.pcrId)?.name ?? null)
                   : null;
               return (
-                <div
-                  key={vm.id}
-                  className="ld-tile-enter"
-                  style={{ animationDelay: `${Math.min(idx, 16) * 45}ms` }}
-                >
+                <div key={vm.id}>
                   <VmTile
                     vm={vm}
                     lineState={lineState as any}
