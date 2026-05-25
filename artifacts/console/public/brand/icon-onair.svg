@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="bgr" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1C1416"/>
+      <stop offset="1" stop-color="#0B0E13"/>
+    </linearGradient>
+    <linearGradient id="mkr" x1="40" y1="38" x2="92" y2="92" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF5A5A"/>
+      <stop offset="1" stop-color="#D23030"/>
+    </linearGradient>
+    <radialGradient id="glr" cx="0.5" cy="0.5" r="0.5">
+      <stop stop-color="#FF4D4D" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#FF4D4D" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#bgr)"/>
+  <rect x="1" y="1" width="126" height="126" rx="27" stroke="#47272B" stroke-width="1"/>
+  <circle cx="64" cy="64" r="42" fill="url(#glr)"/>
+  <path d="M64 26 a38 38 0 0 1 0 76" stroke="url(#mkr)" stroke-width="6" stroke-linecap="round" opacity="0.45"/>
+  <path d="M64 40 a24 24 0 0 1 0 48" stroke="url(#mkr)" stroke-width="6" stroke-linecap="round" opacity="0.85"/>
+  <circle cx="64" cy="64" r="11" fill="url(#mkr)"/>
+</svg>

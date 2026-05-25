@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="96" viewBox="0 0 360 96" fill="none">
+  <defs>
+    <linearGradient id="ld-mark" x1="14" y1="20" x2="78" y2="80" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3FA9FF"/>
+      <stop offset="1" stop-color="#1769B8"/>
+    </linearGradient>
+    <radialGradient id="ld-glow" cx="0.5" cy="0.5" r="0.5">
+      <stop stop-color="#3FA9FF" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#3FA9FF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ld-word" x1="104" y1="34" x2="104" y2="64" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EAF1FA"/>
+      <stop offset="1" stop-color="#C4D2E4"/>
+    </linearGradient>
+  </defs>
+
+  
+  <g>
+    <circle cx="46" cy="48" r="30" fill="url(#ld-glow)"/>
+    
+    <path d="M46 18 a30 30 0 0 1 0 60" stroke="url(#ld-mark)" stroke-width="5" stroke-linecap="round" opacity="0.45"/>
+    
+    <path d="M46 30 a18 18 0 0 1 0 36" stroke="url(#ld-mark)" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
+    
+    <circle cx="46" cy="48" r="8.5" fill="url(#ld-mark)"/>
+  </g>
+
+  
+  <g fill="url(#ld-word)" font-family="'IBM Plex Sans','Segoe UI',sans-serif">
+    <text x="100" y="60" font-size="40" font-weight="700" letter-spacing="-1.2">Line<tspan font-weight="500" fill="#7FB4E6">Deck</tspan></text>
+  </g>
+</svg>
