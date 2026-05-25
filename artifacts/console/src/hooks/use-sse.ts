@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import type { Line } from '@workspace/api-client-react/src/generated/api.schemas';
+import type { Line } from '@workspace/api-client-react';
 
 type SyncStatus = 'SYNCED' | 'OFFLINE' | 'LOCAL';
 

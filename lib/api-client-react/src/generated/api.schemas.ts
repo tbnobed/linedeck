@@ -44,12 +44,29 @@ export interface ResetResult {
   ok: boolean;
 }
 
+export interface Pcr {
+  id: number;
+  name: string;
+}
+
+export interface PcrInput {
+  /** @minLength 1 */
+  name: string;
+}
+
+export interface PcrPatch {
+  /** @minLength 1 */
+  name?: string;
+}
+
 export interface Vm {
   id: number;
   name: string;
   url: string;
   phoneNumber: string;
   position: number;
+  /** @nullable */
+  pcrId?: number | null;
 }
 
 export interface VmInput {
@@ -59,6 +76,8 @@ export interface VmInput {
   url: string;
   phoneNumber: string;
   position: number;
+  /** @nullable */
+  pcrId?: number | null;
 }
 
 export interface VmPatch {
@@ -68,6 +87,8 @@ export interface VmPatch {
   url?: string;
   phoneNumber?: string;
   position?: number;
+  /** @nullable */
+  pcrId?: number | null;
 }
 
 export interface ErrorResponse {

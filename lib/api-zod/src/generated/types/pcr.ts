@@ -6,12 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface Vm {
+export interface Pcr {
   id: number;
   name: string;
-  url: string;
-  phoneNumber: string;
-  position: number;
-  /** @nullable */
-  pcrId?: number | null;
 }

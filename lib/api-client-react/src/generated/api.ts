@@ -24,6 +24,9 @@ import type {
   HealthStatus,
   Line,
   LineInput,
+  Pcr,
+  PcrInput,
+  PcrPatch,
   ResetResult,
   Vm,
   VmInput,
@@ -51,7 +54,6 @@ export const getHealthCheckUrl = () => {
 }
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const healthCheck = async ( options?: RequestInit): Promise<HealthStatus> => {
@@ -129,7 +131,6 @@ export const getGetLinesUrl = () => {
 }
 
 /**
- * Returns a map of line ID to line record
  * @summary Get all line states
  */
 export const getLines = async ( options?: RequestInit): Promise<Line[]> => {
@@ -279,7 +280,6 @@ export const getResetLinesUrl = () => {
 }
 
 /**
- * Clears all line states and labels (end-of-show reset)
  * @summary Reset all lines to idle
  */
 export const resetLines = async ( options?: RequestInit): Promise<ResetResult> => {
@@ -339,6 +339,296 @@ export const useResetLines = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getResetLinesMutationOptions(options));
+    }
+
+export const getListPcrsUrl = () => {
+
+
+
+
+  return `/api/pcrs`
+}
+
+/**
+ * @summary List all PCRs
+ */
+export const listPcrs = async ( options?: RequestInit): Promise<Pcr[]> => {
+
+  return customFetch<Pcr[]>(getListPcrsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListPcrsQueryKey = () => {
+    return [
+    `/api/pcrs`
+    ] as const;
+    }
+
+
+export const getListPcrsQueryOptions = <TData = Awaited<ReturnType<typeof listPcrs>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPcrs>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPcrsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPcrs>>> = ({ signal }) => listPcrs({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPcrs>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListPcrsQueryResult = NonNullable<Awaited<ReturnType<typeof listPcrs>>>
+export type ListPcrsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all PCRs
+ */
+
+export function useListPcrs<TData = Awaited<ReturnType<typeof listPcrs>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPcrs>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListPcrsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreatePcrUrl = () => {
+
+
+
+
+  return `/api/pcrs`
+}
+
+/**
+ * @summary Create a new PCR
+ */
+export const createPcr = async (pcrInput: PcrInput, options?: RequestInit): Promise<Pcr> => {
+
+  return customFetch<Pcr>(getCreatePcrUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      pcrInput,)
+  }
+);}
+
+
+
+
+export const getCreatePcrMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPcr>>, TError,{data: BodyType<PcrInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPcr>>, TError,{data: BodyType<PcrInput>}, TContext> => {
+
+const mutationKey = ['createPcr'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPcr>>, {data: BodyType<PcrInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createPcr(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePcrMutationResult = NonNullable<Awaited<ReturnType<typeof createPcr>>>
+    export type CreatePcrMutationBody = BodyType<PcrInput>
+    export type CreatePcrMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create a new PCR
+ */
+export const useCreatePcr = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPcr>>, TError,{data: BodyType<PcrInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createPcr>>,
+        TError,
+        {data: BodyType<PcrInput>},
+        TContext
+      > => {
+      return useMutation(getCreatePcrMutationOptions(options));
+    }
+
+export const getUpdatePcrUrl = (id: number,) => {
+
+
+
+
+  return `/api/pcrs/${id}`
+}
+
+/**
+ * @summary Update a PCR
+ */
+export const updatePcr = async (id: number,
+    pcrPatch: PcrPatch, options?: RequestInit): Promise<Pcr> => {
+
+  return customFetch<Pcr>(getUpdatePcrUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      pcrPatch,)
+  }
+);}
+
+
+
+
+export const getUpdatePcrMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePcr>>, TError,{id: number;data: BodyType<PcrPatch>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePcr>>, TError,{id: number;data: BodyType<PcrPatch>}, TContext> => {
+
+const mutationKey = ['updatePcr'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePcr>>, {id: number;data: BodyType<PcrPatch>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updatePcr(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdatePcrMutationResult = NonNullable<Awaited<ReturnType<typeof updatePcr>>>
+    export type UpdatePcrMutationBody = BodyType<PcrPatch>
+    export type UpdatePcrMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update a PCR
+ */
+export const useUpdatePcr = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePcr>>, TError,{id: number;data: BodyType<PcrPatch>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updatePcr>>,
+        TError,
+        {id: number;data: BodyType<PcrPatch>},
+        TContext
+      > => {
+      return useMutation(getUpdatePcrMutationOptions(options));
+    }
+
+export const getDeletePcrUrl = (id: number,) => {
+
+
+
+
+  return `/api/pcrs/${id}`
+}
+
+/**
+ * @summary Delete a PCR
+ */
+export const deletePcr = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeletePcrUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeletePcrMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePcr>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deletePcr>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deletePcr'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePcr>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deletePcr(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePcrMutationResult = NonNullable<Awaited<ReturnType<typeof deletePcr>>>
+
+    export type DeletePcrMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete a PCR
+ */
+export const useDeletePcr = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePcr>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deletePcr>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeletePcrMutationOptions(options));
     }
 
 export const getListVmsUrl = () => {

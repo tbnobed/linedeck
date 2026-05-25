@@ -6,13 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface VmPatch {
+export interface PcrPatch {
   /** @minLength 1 */
   name?: string;
-  /** @minLength 1 */
-  url?: string;
-  phoneNumber?: string;
-  position?: number;
-  /** @nullable */
-  pcrId?: number | null;
 }

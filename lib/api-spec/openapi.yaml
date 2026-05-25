@@ -14,13 +14,14 @@ tags:
     description: Line state management
   - name: vms
     description: VM configuration
+  - name: pcrs
+    description: Production Control Room management
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -34,7 +35,6 @@ paths:
       operationId: getLines
       tags: [lines]
       summary: Get all line states
-      description: Returns a map of line ID to line record
       responses:
         "200":
           description: All lines
@@ -75,19 +75,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "404":
-          description: Line not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
 
   /reset:
     post:
       operationId: resetLines
       tags: [lines]
       summary: Reset all lines to idle
-      description: Clears all line states and labels (end-of-show reset)
       responses:
         "200":
           description: Reset successful
@@ -95,6 +88,94 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResetResult"
+
+  /pcrs:
+    get:
+      operationId: listPcrs
+      tags: [pcrs]
+      summary: List all PCRs
+      responses:
+        "200":
+          description: PCR list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Pcr"
+    post:
+      operationId: createPcr
+      tags: [pcrs]
+      summary: Create a new PCR
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PcrInput"
+      responses:
+        "201":
+          description: Created PCR
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pcr"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /pcrs/{id}:
+    patch:
+      operationId: updatePcr
+      tags: [pcrs]
+      summary: Update a PCR
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PcrPatch"
+      responses:
+        "200":
+          description: Updated PCR
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pcr"
+        "404":
+          description: PCR not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deletePcr
+      tags: [pcrs]
+      summary: Delete a PCR
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: PCR not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /vms:
     get:
@@ -226,6 +307,30 @@ components:
         ok:
           type: boolean
 
+    Pcr:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+
+    PcrInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+
+    PcrPatch:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+
     Vm:
       type: object
       required: [id, name, url, phoneNumber, position]
@@ -240,6 +345,8 @@ components:
           type: string
         position:
           type: integer
+        pcrId:
+          type: ["integer", "null"]
 
     VmInput:
       type: object
@@ -255,6 +362,8 @@ components:
           type: string
         position:
           type: integer
+        pcrId:
+          type: ["integer", "null"]
 
     VmPatch:
       type: object
@@ -269,6 +378,8 @@ components:
           type: string
         position:
           type: integer
+        pcrId:
+          type: ["integer", "null"]
 
     ErrorResponse:
       type: object

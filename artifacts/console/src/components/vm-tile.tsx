@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Vm, Line } from "@workspace/api-client-react/src/generated/api.schemas";
+import type { Vm, Line } from "@workspace/api-client-react";
 import { Maximize2, Phone, User, Activity } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
@@ -13,7 +13,7 @@ interface VmTileProps {
 export function VmTile({ vm, lineState, onStateChange, onLabelChange }: VmTileProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [localLabel, setLocalLabel] = useState(lineState.label);
-  const labelTimerRef = useRef<NodeJS.Timeout>();
+  const labelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setLocalLabel(lineState.label);

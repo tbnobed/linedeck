@@ -9,7 +9,6 @@ import * as zod from 'zod';
 
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
@@ -18,7 +17,6 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
- * Returns a map of line ID to line record
  * @summary Get all line states
  */
 export const GetLinesResponseItem = zod.object({
@@ -55,11 +53,59 @@ export const UpdateLineResponse = zod.object({
 
 
 /**
- * Clears all line states and labels (end-of-show reset)
  * @summary Reset all lines to idle
  */
 export const ResetLinesResponse = zod.object({
   "ok": zod.boolean()
+})
+
+
+/**
+ * @summary List all PCRs
+ */
+export const ListPcrsResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string()
+})
+export const ListPcrsResponse = zod.array(ListPcrsResponseItem)
+
+
+/**
+ * @summary Create a new PCR
+ */
+
+
+
+export const CreatePcrBody = zod.object({
+  "name": zod.string().min(1)
+})
+
+
+/**
+ * @summary Update a PCR
+ */
+export const UpdatePcrParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+export const UpdatePcrBody = zod.object({
+  "name": zod.string().min(1).optional()
+})
+
+export const UpdatePcrResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string()
+})
+
+
+/**
+ * @summary Delete a PCR
+ */
+export const DeletePcrParams = zod.object({
+  "id": zod.coerce.number()
 })
 
 
@@ -71,7 +117,8 @@ export const ListVmsResponseItem = zod.object({
   "name": zod.string(),
   "url": zod.string(),
   "phoneNumber": zod.string(),
-  "position": zod.number()
+  "position": zod.number(),
+  "pcrId": zod.number().nullish()
 })
 export const ListVmsResponse = zod.array(ListVmsResponseItem)
 
@@ -87,7 +134,8 @@ export const CreateVmBody = zod.object({
   "name": zod.string().min(1),
   "url": zod.string().min(1),
   "phoneNumber": zod.string(),
-  "position": zod.number()
+  "position": zod.number(),
+  "pcrId": zod.number().nullish()
 })
 
 
@@ -106,7 +154,8 @@ export const UpdateVmBody = zod.object({
   "name": zod.string().min(1).optional(),
   "url": zod.string().min(1).optional(),
   "phoneNumber": zod.string().optional(),
-  "position": zod.number().optional()
+  "position": zod.number().optional(),
+  "pcrId": zod.number().nullish()
 })
 
 export const UpdateVmResponse = zod.object({
@@ -114,7 +163,8 @@ export const UpdateVmResponse = zod.object({
   "name": zod.string(),
   "url": zod.string(),
   "phoneNumber": zod.string(),
-  "position": zod.number()
+  "position": zod.number(),
+  "pcrId": zod.number().nullish()
 })
 
 
