@@ -3,13 +3,17 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: ViP Dante VM Console API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: lines
+    description: Line state management
+  - name: vms
+    description: VM configuration
 paths:
   /healthz:
     get:
@@ -24,6 +28,162 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /lines:
+    get:
+      operationId: getLines
+      tags: [lines]
+      summary: Get all line states
+      description: Returns a map of line ID to line record
+      responses:
+        "200":
+          description: All lines
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Line"
+
+  /lines/{lineId}:
+    put:
+      operationId: updateLine
+      tags: [lines]
+      summary: Update a line state or label
+      parameters:
+        - name: lineId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LineInput"
+      responses:
+        "200":
+          description: Updated line
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Line"
+        "400":
+          description: Invalid state value
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Line not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /reset:
+    post:
+      operationId: resetLines
+      tags: [lines]
+      summary: Reset all lines to idle
+      description: Clears all line states and labels (end-of-show reset)
+      responses:
+        "200":
+          description: Reset successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResetResult"
+
+  /vms:
+    get:
+      operationId: listVms
+      tags: [vms]
+      summary: List all configured VMs
+      responses:
+        "200":
+          description: VM list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Vm"
+    post:
+      operationId: createVm
+      tags: [vms]
+      summary: Add a new VM
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VmInput"
+      responses:
+        "201":
+          description: Created VM
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vm"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /vms/{id}:
+    patch:
+      operationId: updateVm
+      tags: [vms]
+      summary: Update a VM
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VmPatch"
+      responses:
+        "200":
+          description: Updated VM
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vm"
+        "404":
+          description: VM not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteVm
+      tags: [vms]
+      summary: Delete a VM
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: VM not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +194,85 @@ components:
       required:
         - status
 
+    Line:
+      type: object
+      required: [id, state, label, updatedAt]
+      properties:
+        id:
+          type: string
+        state:
+          type: string
+          enum: [idle, standby, onair]
+        label:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+
+    LineInput:
+      type: object
+      properties:
+        state:
+          type: string
+          enum: [idle, standby, onair]
+        label:
+          type: string
+          maxLength: 120
+
+    ResetResult:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+
+    Vm:
+      type: object
+      required: [id, name, url, phoneNumber, position]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        url:
+          type: string
+        phoneNumber:
+          type: string
+        position:
+          type: integer
+
+    VmInput:
+      type: object
+      required: [name, url, phoneNumber, position]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        url:
+          type: string
+          minLength: 1
+        phoneNumber:
+          type: string
+        position:
+          type: integer
+
+    VmPatch:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        url:
+          type: string
+          minLength: 1
+        phoneNumber:
+          type: string
+        position:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
