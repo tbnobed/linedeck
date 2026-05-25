@@ -186,7 +186,18 @@ function SystemsTab() {
                   </div>
                   <div className="flex-1 grid grid-cols-12 gap-4 items-center">
                     <div className="col-span-3 font-semibold">{vm.name}</div>
-                    <div className="col-span-4 text-muted-foreground font-mono text-sm truncate">{vm.url}</div>
+                    <div className="col-span-4 text-sm">
+                      {vm.guacConnectionId != null ? (
+                        <span className="inline-flex items-center gap-1.5 font-mono text-xs bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded">
+                          Guac #{vm.guacConnectionId}
+                          <span className="text-muted-foreground/70">·{vm.guacDataSource}</span>
+                        </span>
+                      ) : vm.url ? (
+                        <span className="text-muted-foreground font-mono text-xs truncate block">{vm.url}</span>
+                      ) : (
+                        <span className="text-muted-foreground/40 text-xs italic">no source</span>
+                      )}
+                    </div>
                     <div className="col-span-2 text-muted-foreground text-sm">{vm.phoneNumber || "—"}</div>
                     <div className="col-span-3 text-sm">
                       {assignedPcr ? (
