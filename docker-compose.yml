@@ -1,49 +1,82 @@
+# LineDeck stack.
+#
+# Designed to coexist with other compose stacks on the same host:
+# - `db` (Postgres) and `app` (API + bundled React console) do NOT publish ports
+#   directly to the host network — only the reverse proxy (Nginx Proxy Manager
+#   on the host) reaches `app` via the published HTTP port below.
+# - All containers are named with a `linedeck-` prefix so they will not collide
+#   with sibling stacks (e.g. another image already using host port 5000 or its
+#   own Postgres instance).
+#
+# First-time setup:
+#   cp docker/.env.example .env  # fill in secrets
+#   docker compose up -d --build
+# Migrations run automatically before `app` starts.
+
+name: linedeck
+
 services:
   db:
     image: postgres:16-alpine
+    container_name: linedeck-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: vip_console
-      POSTGRES_USER: vip
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: linedeck
+      POSTGRES_USER: linedeck
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U vip -d vip_console"]
+      test: ["CMD-SHELL", "pg_isready -U linedeck -d linedeck"]
       interval: 5s
       timeout: 5s
       retries: 10
+    # Not published — only reachable inside the linedeck network.
 
-  api:
+  migrate:
     build:
       context: .
       dockerfile: docker/Dockerfile.api
+      target: migrator
+    container_name: linedeck-migrate
+    environment:
+      DATABASE_URL: postgres://linedeck:${POSTGRES_PASSWORD}@db:5432/linedeck
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+      target: runner
+    container_name: linedeck-app
     restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 5000
-      DATABASE_URL: postgres://vip:${POSTGRES_PASSWORD:-changeme}@db:5432/vip_console
-      SESSION_SECRET: ${SESSION_SECRET:-change-this-secret}
+      DATABASE_URL: postgres://linedeck:${POSTGRES_PASSWORD}@db:5432/linedeck
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET required}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      GUACAMOLE_URL: ${GUACAMOLE_URL:?GUACAMOLE_URL required}
+      GUACAMOLE_USERNAME: ${GUACAMOLE_USERNAME:?GUACAMOLE_USERNAME required}
+      GUACAMOLE_PASSWORD: ${GUACAMOLE_PASSWORD:?GUACAMOLE_PASSWORD required}
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:5000/api/healthz || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
-
-  console:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.console
-    restart: unless-stopped
     ports:
-      - "${PORT:-80}:80"
-    depends_on:
-      api:
-        condition: service_healthy
+      # Host port → container port 5000. Defaults to 8090 to avoid colliding
+      # with whatever you already have on 80/5000. Point NPM at this port.
+      - "${LINEDECK_HOST_PORT:-8090}:5000"
 
 volumes:
   pgdata:
+    name: linedeck_pgdata

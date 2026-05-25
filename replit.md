@@ -51,18 +51,22 @@ A broadcast operations console for monitoring Dante virtual audio machines (VMs)
 ## Docker (Ubuntu server deployment)
 
 ```bash
-# Copy and configure env
 cp docker/.env.example .env
-# Edit .env: set POSTGRES_PASSWORD and SESSION_SECRET
+# Edit .env: POSTGRES_PASSWORD, SESSION_SECRET, GUACAMOLE_URL/USERNAME/PASSWORD
 
-# Build and start all services
 docker compose up -d --build
-
-# App now available at http://<host>:80
-# Health check: curl http://<host>/api/healthz
+# App available at http://<host>:${LINEDECK_HOST_PORT:-8090}
+# Health: curl http://<host>:8090/api/healthz
 ```
 
-Services: `db` (PostgreSQL), `api` (Express API on 5000), `console` (Nginx serving built React + reverse proxying `/api/`)
+Services:
+- `db` — PostgreSQL, not published (internal-only on the `linedeck` network)
+- `migrate` — one-shot, runs `drizzle-kit push` before `app` starts
+- `app` — single Node container: Express API on `/api/*` AND serves the built React console as static files for everything else. Published on `LINEDECK_HOST_PORT` (default 8090).
+
+Designed to coexist with other stacks on the same host: containers are prefixed `linedeck-*`, the internal DB is not exposed, and the host port is configurable so it never collides with other apps already on 80/5000. Front a domain at it with Nginx Proxy Manager (or any reverse proxy) by pointing the proxy host at `http://<host>:8090`.
+
+NPM proxy host settings worth setting: enable **Websockets Support** (Guacamole tunnel) and add a custom location for `/api/events` with `proxy_buffering off;` and a long read timeout (e.g. `proxy_read_timeout 3600s;`) so SSE streams don't get buffered or cut.
 
 ## Gotchas
 
