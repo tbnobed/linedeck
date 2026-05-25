@@ -6,11 +6,12 @@ import { GuacClient } from "./guac-client";
 interface VmTileProps {
   vm: Vm;
   lineState: Line;
+  pcrName?: string | null;
   onStateChange: () => void;
   onLabelChange: (label: string) => void;
 }
 
-export function VmTile({ vm, lineState, onStateChange, onLabelChange }: VmTileProps) {
+export function VmTile({ vm, lineState, pcrName, onStateChange, onLabelChange }: VmTileProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [localLabel, setLocalLabel] = useState(lineState.label);
   const labelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -82,6 +83,11 @@ export function VmTile({ vm, lineState, onStateChange, onLabelChange }: VmTilePr
       >
         <div className="flex items-center gap-3 min-w-0">
           <div className="font-mono font-bold truncate">{vm.name}</div>
+          {pcrName && (
+            <span className="text-[10px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded-sm bg-primary/15 text-primary border border-primary/30 shrink-0">
+              {pcrName}
+            </span>
+          )}
           {vm.phoneNumber && (
             <div className="flex items-center gap-1 text-xs opacity-70">
               <Phone className="w-3 h-3" />

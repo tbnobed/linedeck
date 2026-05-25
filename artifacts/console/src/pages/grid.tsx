@@ -164,11 +164,16 @@ export function GridPage() {
           >
             {filteredVms.map((vm) => {
               const lineState = getLineState(vm.id);
+              const pcrName =
+                pcrFilter === null && vm.pcrId != null
+                  ? (pcrs?.find((p) => p.id === vm.pcrId)?.name ?? null)
+                  : null;
               return (
                 <VmTile
                   key={vm.id}
                   vm={vm}
                   lineState={lineState as any}
+                  pcrName={pcrName}
                   onStateChange={() => handleStateChange(vm.id, lineState.state)}
                   onLabelChange={(label) => handleLabelChange(vm.id, label)}
                 />
