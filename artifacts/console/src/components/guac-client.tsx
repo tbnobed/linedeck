@@ -171,15 +171,14 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
     };
 
     // ── Clipboard sync (text/plain), bidirectional.
-    //   local → remote: poll navigator.clipboard.readText() and push to the
-    //     remote whenever it changes. The 'paste' DOM event only fires on
-    //     focusable inputs — not on our plain <div> — so polling is the
-    //     reliable way to keep clipboards in sync (same approach Apache
-    //     Guacamole's own webapp uses). By the time Ctrl+V reaches the remote,
-    //     the right text is already in its clipboard.
+    //   local → remote: only triggered by real user gestures — the native
+    //     'paste' event (window-level catches it even without a focused
+    //     input) and Cmd/Ctrl+V keydown. Polling navigator.clipboard.readText
+    //     here would make Firefox show its "Paste" permission button on
+    //     every poll, blocking the page.
     //   remote → local: subscribe to client.onclipboard and write the streamed
     //     text into navigator.clipboard.
-    let lastPushed = "";
+    let lastSynced = "";
     const tag = `[Clipboard #${connectionId}]`;
     // eslint-disable-next-line no-console
     const warn = (...a: unknown[]) => console.warn(tag, ...a);
@@ -194,19 +193,9 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
         const writer = new Guacamole.StringWriter(stream);
         writer.sendText(text);
         writer.sendEnd();
-        lastPushed = text;
+        lastSynced = text;
       } catch (err) {
         warn("push to remote failed", err);
-      }
-    };
-
-    const syncFromLocalClipboard = async () => {
-      if (!document.hasFocus() || !navigator.clipboard?.readText) return;
-      try {
-        const text = await navigator.clipboard.readText();
-        if (text && text !== lastPushed) pushTextToRemote(text);
-      } catch {
-        // readText denied — user hasn't granted clipboard permission yet.
       }
     };
 
@@ -219,42 +208,37 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
         buf += text;
       };
       reader.onend = () => {
-        lastPushed = buf;
+        lastSynced = buf;
         navigator.clipboard?.writeText(buf).catch((err) =>
           warn("writeText failed", err?.name, err?.message),
         );
       };
     };
 
-    const pollInterval = window.setInterval(() => {
-      void syncFromLocalClipboard();
-    }, 500);
-
-    const onFocus = () => {
-      void syncFromLocalClipboard();
-    };
-    const onMouseEnter = () => {
-      void syncFromLocalClipboard();
-    };
-    window.addEventListener("focus", onFocus);
-    container.addEventListener("mouseenter", onMouseEnter);
-
-    // Fallback paste event (fires when a focusable element is focused).
+    // Outbound: trust the native paste event — its clipboardData is available
+    // synchronously, no readText() call (and therefore no Firefox prompt).
     const onPaste = (e: ClipboardEvent) => {
       const text = e.clipboardData?.getData("text/plain") ?? "";
-      if (text && text !== lastPushed) pushTextToRemote(text);
+      if (text && text !== lastSynced) pushTextToRemote(text);
     };
     window.addEventListener("paste", onPaste);
 
-    // Cmd/Ctrl+V: re-sync immediately so the remote sees fresh clipboard.
+    // Cmd/Ctrl+V: a true user gesture, so readText() is allowed without UI
+    // prompt. Use it to cover the case where the user copied something
+    // outside the browser and then Ctrl+V'd into the remote.
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && (e.key === "v" || e.key === "V")) {
-        void syncFromLocalClipboard();
+        navigator.clipboard?.readText().then(
+          (text) => {
+            if (text && text !== lastSynced) pushTextToRemote(text);
+          },
+          () => {
+            // permission denied — falls back to onPaste handler above.
+          },
+        );
       }
     };
     window.addEventListener("keydown", onKeyDown, true);
-
-    void syncFromLocalClipboard();
 
     return () => {
       try {
@@ -262,11 +246,8 @@ export function GuacClient({ connectionId, dataSource, interactive = false }: Gu
         keyboard.onkeydown = null;
         keyboard.onkeyup = null;
         client.onclipboard = null;
-        window.clearInterval(pollInterval);
-        window.removeEventListener("focus", onFocus);
         window.removeEventListener("paste", onPaste);
         window.removeEventListener("keydown", onKeyDown, true);
-        container.removeEventListener("mouseenter", onMouseEnter);
       } catch {
         // best-effort
       }
